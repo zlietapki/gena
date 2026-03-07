@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/zlietapki/microboiler/pkg/genfs"
 	"github.com/zlietapki/microboiler/pkg/vfs"
@@ -56,7 +56,7 @@ func mergeProjects(projects []vfs.Project) vfs.Project {
 }
 
 func mergeFiles(files []vfs.File, names []string, path string) vfs.File {
-	blocksList := make([]vfs.Blocks, len(files))
+	blocksList := make([][]vfs.Block, len(files))
 	for i, f := range files {
 		blocksList[i] = f.Blocks
 	}
@@ -71,20 +71,20 @@ type namedBlock struct {
 	block vfs.Block
 }
 
-func mergeBlocks(blocksList []vfs.Blocks, names []string, path string) vfs.Blocks {
-	keys := map[string]struct{}{}
+func mergeBlocks(blocksList [][]vfs.Block, names []string, path string) []vfs.Block {
+	maxLen := 0
 	for _, blocks := range blocksList {
-		for k := range blocks {
-			keys[k] = struct{}{}
+		if len(blocks) > maxLen {
+			maxLen = len(blocks)
 		}
 	}
 
-	result := vfs.Blocks{}
-	for k := range keys {
+	result := make([]vfs.Block, maxLen)
+	for k := 0; k < maxLen; k++ {
 		var collected []namedBlock
 		for i, blocks := range blocksList {
-			if b, ok := blocks[k]; ok {
-				collected = append(collected, namedBlock{names[i], b})
+			if k < len(blocks) {
+				collected = append(collected, namedBlock{names[i], blocks[k]})
 			}
 		}
 		if len(collected) == 0 {
@@ -100,7 +100,7 @@ func mergeBlocks(blocksList []vfs.Blocks, names []string, path string) vfs.Block
 			}
 		}
 		if hasMixed {
-			fmt.Fprintf(os.Stderr, "WARNING: mixed block types at %s:%s\n", path, k)
+			fmt.Fprintf(os.Stderr, "WARNING: mixed block types at %s:%d\n", path, k)
 			for _, nb := range collected {
 				fmt.Fprintf(os.Stderr, "  %s: %s\n", nb.name, blockTypeName(nb.block.Type))
 			}
@@ -109,7 +109,7 @@ func mergeBlocks(blocksList []vfs.Blocks, names []string, path string) vfs.Block
 		case vfs.BlockTypeOverwrite:
 			result[k] = collected[len(collected)-1].block
 		case vfs.BlockTypeAdd:
-			var data []byte
+			var data []string
 			for _, nb := range collected {
 				data = append(data, nb.block.Data...)
 			}
@@ -119,21 +119,20 @@ func mergeBlocks(blocksList []vfs.Blocks, names []string, path string) vfs.Block
 			}
 		case vfs.BlockTypeMerge:
 			seen := map[string]struct{}{}
-			var lines [][]byte
+			var lines []string
 			for _, nb := range collected {
-				for _, line := range bytes.Split(nb.block.Data, []byte("\n")) {
-					line = bytes.TrimSpace(line)
-					if len(line) == 0 {
+				for _, line := range nb.block.Data {
+					line = strings.TrimSpace(line)
+					if line == "" {
 						continue
 					}
-					s := string(line)
-					if _, exists := seen[s]; !exists {
-						seen[s] = struct{}{}
+					if _, exists := seen[line]; !exists {
+						seen[line] = struct{}{}
 						lines = append(lines, line)
 					}
 				}
 			}
-			result[k] = vfs.Block{Type: first.block.Type, Data: bytes.Join(lines, []byte("\n"))}
+			result[k] = vfs.Block{Type: first.block.Type, Data: lines}
 		}
 	}
 
