@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/zlietapki/microboiler/pkg/vfs"
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
-func showProj(proj vfs.Project) {
+func showProj(proj vfs.Directory) {
 	showFiles(proj.Files, 0)
 	showDirs(proj.Dirs, 0)
 }

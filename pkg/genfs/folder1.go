@@ -1,10 +1,10 @@
 package genfs
 
 import (
-	"github.com/zlietapki/microboiler/pkg/vfs"
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
-var FSfolder1 = vfs.Project{
+var FSfolder1 = vfs.Directory{
 	Name: "folder1",
 	Files: []vfs.File{
 		{

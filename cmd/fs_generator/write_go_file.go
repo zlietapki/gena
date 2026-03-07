@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/zlietapki/microboiler/pkg/vfs"
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
 func varNameFromPath(path string) string {
@@ -16,7 +16,7 @@ func varNameFromPath(path string) string {
 	return "FS" + name[:len(name)-len(ext)]
 }
 
-func writeGoFile(project *vfs.Project, outputFile string, varName string) {
+func writeGoFile(project *vfs.Directory, outputFile string, varName string) {
 	var buf bytes.Buffer
 
 	buf.WriteString("package genfs\n\n")
@@ -36,7 +36,7 @@ func writeGoFile(project *vfs.Project, outputFile string, varName string) {
 
 func writeTree(buf *bytes.Buffer, dir vfs.Directory, indent int, isRoot bool) {
 	if isRoot {
-		fmt.Fprintf(buf, "vfs.Project{\n")
+		fmt.Fprintf(buf, "vfs.Directory{\n")
 		fmt.Fprintf(buf, "%sName: %q,\n", tabs(indent+1), dir.Name)
 	} else {
 		fmt.Fprintf(buf, "{\n")

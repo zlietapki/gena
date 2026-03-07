@@ -8,7 +8,7 @@ const (
 	BlockTypeMerge
 )
 
-type Project struct {
+type Directory struct {
 	Name  string
 	Files []File
 	Dirs  []Directory
@@ -23,10 +23,4 @@ type Block struct {
 	Name string
 	Type BlockType
 	Data []string
-}
-
-type Directory struct {
-	Name  string
-	Files []File
-	Dirs  []Directory
 }

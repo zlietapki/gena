@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 5 {
+	if len(os.Args) < 4 {
 		fmt.Println("Usage: fs_gen <src_folder> <output_file>")
 	}
 
@@ -14,7 +14,7 @@ func main() {
 	outputFile := os.Args[2]
 	isGo := os.Args[3]
 
-	project, err := getProject(sourceDir)
+	project, err := getDir(sourceDir)
 	if err != nil {
 		panic(err)
 	}

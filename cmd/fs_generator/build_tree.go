@@ -6,43 +6,38 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zlietapki/microboiler/pkg/vfs"
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
-func getProject(projectPath string) (*vfs.Project, error) {
-	projInfo, err := os.Stat(projectPath)
-	if err != nil {
-		return nil, err
+func getDir(path string) (*vfs.Directory, error) {
+	dir := vfs.Directory{
+		Name: filepath.Base(path),
 	}
 
-	project := vfs.Project{
-		Name: projInfo.Name(),
-	}
-
-	entries, err := os.ReadDir(projectPath)
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, entry := range entries {
 		if entry.IsDir() {
-			dir, err := getDir(filepath.Join(projectPath, entry.Name()))
+			sub, err := getDir(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return nil, err
 			}
 
-			project.Dirs = append(project.Dirs, *dir)
+			dir.Dirs = append(dir.Dirs, *sub)
 		} else {
-			file, err := getFile(filepath.Join(projectPath, entry.Name()))
+			file, err := getFile(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return nil, err
 			}
 
-			project.Files = append(project.Files, *file)
+			dir.Files = append(dir.Files, *file)
 		}
 	}
 
-	return &project, nil
+	return &dir, nil
 }
 
 func getFile(path string) (*vfs.File, error) {
@@ -123,35 +118,4 @@ func getBlockType(line string) vfs.BlockType {
 	default:
 		return vfs.BlockTypeOverwrite
 	}
-}
-
-func getDir(path string) (*vfs.Directory, error) {
-	dir := vfs.Directory{
-		Name: filepath.Base(path),
-	}
-
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			sub, err := getDir(filepath.Join(path, entry.Name()))
-			if err != nil {
-				return nil, err
-			}
-
-			dir.Dirs = append(dir.Dirs, *sub)
-		} else {
-			file, err := getFile(filepath.Join(path, entry.Name()))
-			if err != nil {
-				return nil, err
-			}
-
-			dir.Files = append(dir.Files, *file)
-		}
-	}
-
-	return &dir, nil
 }

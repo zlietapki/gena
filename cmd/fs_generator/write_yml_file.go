@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/zlietapki/microboiler/pkg/vfs"
+	"github.com/zlietapki/microboiler/internal/vfs"
 	"gopkg.in/yaml.v3"
 )
 
-func writeYamlFile(project *vfs.Project, outputFile string) error {
+func writeYamlFile(project *vfs.Directory, outputFile string) error {
 	data, err := yaml.Marshal(project)
 	if err != nil {
 		return err

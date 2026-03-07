@@ -5,12 +5,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/zlietapki/microboiler/internal/vfs"
 	"github.com/zlietapki/microboiler/pkg/genfs"
-	"github.com/zlietapki/microboiler/pkg/vfs"
 )
 
 func main() {
-	projects := []vfs.Project{
+	projects := []vfs.Directory{
 		genfs.FSfolder1,
 		genfs.FSfolder2,
 	}
@@ -18,7 +18,7 @@ func main() {
 	showProj(result)
 }
 
-func mergeProjects(projects []vfs.Project) vfs.Project {
+func mergeProjects(projects []vfs.Directory) vfs.Directory {
 	// projects files
 	fileGroups := map[string][]vfs.File{}
 	fileNames := map[string][]string{}
@@ -49,7 +49,7 @@ func mergeProjects(projects []vfs.Project) vfs.Project {
 		mergedDirs = append(mergedDirs, mergeDirs(group, dirNames[dname], ""))
 	}
 
-	return vfs.Project{
+	return vfs.Directory{
 		Files: mergedFiles,
 		Dirs:  mergedDirs,
 	}
