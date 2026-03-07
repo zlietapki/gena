@@ -62,7 +62,6 @@ func mergeFiles(files []vfs.File, names []string, path string) vfs.File {
 	}
 	return vfs.File{
 		Name:   files[0].Name,
-		Mode:   files[0].Mode,
 		Blocks: mergeBlocks(blocksList, names, path+"/"+files[0].Name),
 	}
 }
@@ -170,7 +169,6 @@ func mergeDirs(dirs []vfs.Directory, names []string, path string) vfs.Directory 
 
 	return vfs.Directory{
 		Name:  dirs[0].Name,
-		Mode:  dirs[0].Mode,
 		Files: mergedFiles,
 		Dirs:  mergedDirs,
 	}

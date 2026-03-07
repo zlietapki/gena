@@ -53,7 +53,7 @@ func writeTree(buf *bytes.Buffer, dir vfs.Directory, indent int, isRoot bool) {
 			for _, block := range f.Blocks {
 				fmt.Fprintf(buf, "%s{\n", tabs(indent+4))
 				fmt.Fprintf(buf, "%sType: %s,\n", tabs(indent+5), blockTypeName(block.Type))
-				fmt.Fprintf(buf, "%sData: []byte(%q),\n", tabs(indent+5), block.Data)
+				fmt.Fprintf(buf, "%sData: %#v,\n", tabs(indent+5), block.Data)
 				fmt.Fprintf(buf, "%s},\n", tabs(indent+4))
 			}
 			fmt.Fprintf(buf, "%s},\n", tabs(indent+3))
@@ -67,7 +67,7 @@ func writeTree(buf *bytes.Buffer, dir vfs.Directory, indent int, isRoot bool) {
 
 	// directories
 	if len(dir.Dirs) > 0 {
-		fmt.Fprintf(buf, "%sDirectories: []vfs.Directory{\n", tabs(indent+1))
+		fmt.Fprintf(buf, "%sDirs: []vfs.Directory{\n", tabs(indent+1))
 
 		for _, d := range dir.Dirs {
 			buf.WriteString(tabs(indent + 2))
@@ -77,7 +77,7 @@ func writeTree(buf *bytes.Buffer, dir vfs.Directory, indent int, isRoot bool) {
 
 		fmt.Fprintf(buf, "%s},\n", tabs(indent+1))
 	} else {
-		fmt.Fprintf(buf, "%sDirectories: nil,\n", tabs(indent+1))
+		fmt.Fprintf(buf, "%sDirs: nil,\n", tabs(indent+1))
 	}
 
 	fmt.Fprintf(buf, "%s}", tabs(indent))
