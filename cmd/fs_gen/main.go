@@ -6,20 +6,24 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/zlietapki/microboiler/internal/vfs"
+	"github.com/zlietapki/microboiler/pkg/vfs"
 )
 
 // usage //go:generate go run ./cmd/fsgen
 func main() {
-	sourceDir := "./check"
-	outputFile := "./generated_fs.go"
+	if len(os.Args) < 4 {
+		fmt.Println("Usage: fs_gen <src_folder> <output_file>")
+	}
+
+	sourceDir := os.Args[1]
+	outputFile := os.Args[2]
 
 	var buf bytes.Buffer
 
 	buf.WriteString("package result\n\n")
 	buf.WriteString("import (\n")
 	buf.WriteString("\t\"io/fs\"\n\n")
-	buf.WriteString("\t\"github.com/zlietapki/microboiler/internal/vfs\"\n")
+	buf.WriteString("\t\"github.com/zlietapki/microboiler/pkg/vfs\"\n")
 	buf.WriteString(")\n\n")
 
 	buf.WriteString("var FS = ")

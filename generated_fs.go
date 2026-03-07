@@ -3,7 +3,7 @@ package result
 import (
 	"io/fs"
 
-	"github.com/zlietapki/microboiler/internal/vfs"
+	"github.com/zlietapki/microboiler/pkg/vfs"
 )
 
 var FS = vfs.Directory{
