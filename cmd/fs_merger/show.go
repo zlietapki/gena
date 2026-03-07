@@ -25,7 +25,7 @@ func showBlocks(blocks vfs.Blocks, ident int) {
 	for key, block := range blocks {
 		fmt.Printf("%s-----BLOCK-----\n", tabs(ident))
 		fmt.Printf("%sBlock name: %+v\n", tabs(ident), key)
-		fmt.Printf("%sBlock type: %+v\n", tabs(ident), block.Type)
+		fmt.Printf("%sBlock type: %+v\n", tabs(ident), blockTypeName(block.Type))
 		fmt.Printf("%sBlock data: %s\n", tabs(ident), block.Data)
 	}
 }

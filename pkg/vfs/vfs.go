@@ -31,6 +31,7 @@ type Directory struct {
 }
 
 type Project struct {
+	Name        string
 	Files       []File
 	Directories []Directory
 }

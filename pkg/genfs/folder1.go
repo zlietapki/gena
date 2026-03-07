@@ -7,11 +7,16 @@ import (
 )
 
 var FSfolder1 = vfs.Project{
+	Name: "folder1",
 	Files: []vfs.File{
 		{
 			Name: "main",
 			Mode: fs.FileMode(0644),
 			Blocks: vfs.Blocks{
+				"3": vfs.Block{
+					Type: vfs.BlockTypeOverwrite,
+					Data: []byte("folder1 line3 should overwrite\n"),
+				},
 				"1": vfs.Block{
 					Type: vfs.BlockTypeOverwrite,
 					Data: []byte("folder1 line1 should overwrite\n"),
@@ -19,10 +24,6 @@ var FSfolder1 = vfs.Project{
 				"2": vfs.Block{
 					Type: vfs.BlockTypeMerge,
 					Data: []byte("\tline1\n\tline2\n\tline3\n"),
-				},
-				"3": vfs.Block{
-					Type: vfs.BlockTypeOverwrite,
-					Data: []byte("folder1 line3 should overwrite\n"),
 				},
 			},
 		},
@@ -37,7 +38,7 @@ var FSfolder1 = vfs.Project{
 					Mode: fs.FileMode(0644),
 					Blocks: vfs.Blocks{
 						"hehe": vfs.Block{
-							Type: vfs.BlockTypeOverwrite,
+							Type: vfs.BlockTypeMerge,
 							Data: []byte("here it is wins\n"),
 						},
 					},

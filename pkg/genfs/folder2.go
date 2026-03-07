@@ -7,6 +7,7 @@ import (
 )
 
 var FSfolder2 = vfs.Project{
+	Name: "folder2",
 	Files: []vfs.File{
 		{
 			Name: "main",

@@ -38,6 +38,7 @@ func writeGoFile(tree vfs.Directory, outputFile string, varName string) {
 func writeTree(buf *bytes.Buffer, dir vfs.Directory, indent int, isRoot bool) {
 	if isRoot {
 		fmt.Fprintf(buf, "vfs.Project{\n")
+		fmt.Fprintf(buf, "%sName: %q,\n", tabs(indent+1), dir.Name)
 	} else {
 		fmt.Fprintf(buf, "{\n")
 		fmt.Fprintf(buf, "%sName: %q,\n", tabs(indent+1), dir.Name)
