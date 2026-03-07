@@ -28,7 +28,7 @@ var FSfolder1 = vfs.Project{
 			},
 		},
 	},
-	Directories: []vfs.Directory{
+	Dirs: []vfs.Directory{
 		{
 			Name: "subFolder1",
 			Mode: fs.FileMode(0755),
@@ -44,7 +44,7 @@ var FSfolder1 = vfs.Project{
 					},
 				},
 			},
-			Directories: nil,
+			Dirs: nil,
 		},
 	},
 }

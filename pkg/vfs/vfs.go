@@ -1,7 +1,5 @@
 package vfs
 
-import "io/fs"
-
 type BlockType int
 
 const (
@@ -10,28 +8,25 @@ const (
 	BlockTypeMerge
 )
 
-type Block struct {
-	Data []byte
-	Type BlockType
+type Project struct {
+	Name  string
+	Files []File
+	Dirs  []Directory
 }
-
-type Blocks map[string]Block
 
 type File struct {
 	Name   string
-	Mode   fs.FileMode
-	Blocks Blocks
+	Blocks []Block
+}
+
+type Block struct {
+	Name string
+	Type BlockType
+	Data []string
 }
 
 type Directory struct {
-	Name        string
-	Mode        fs.FileMode
-	Files       []File
-	Directories []Directory
-}
-
-type Project struct {
-	Name        string
-	Files       []File
-	Directories []Directory
+	Name  string
+	Files []File
+	Dirs  []Directory
 }

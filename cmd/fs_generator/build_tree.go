@@ -9,105 +9,149 @@ import (
 	"github.com/zlietapki/microboiler/pkg/vfs"
 )
 
-func buildTree(path string) (vfs.Directory, error) {
-	info, err := os.Stat(path)
+func getProject(projectPath string) (*vfs.Project, error) {
+	projInfo, err := os.Stat(projectPath)
 	if err != nil {
-		return vfs.Directory{}, err
+		return nil, err
 	}
 
-	dir := vfs.Directory{
-		Name: info.Name(),
-		Mode: info.Mode(),
+	project := vfs.Project{
+		Name: projInfo.Name(),
 	}
 
-	entries, err := os.ReadDir(path)
+	entries, err := os.ReadDir(projectPath)
 	if err != nil {
-		return vfs.Directory{}, err
+		return nil, err
 	}
 
 	for _, entry := range entries {
-		full := filepath.Join(path, entry.Name())
-
 		if entry.IsDir() {
-			sub, err := buildTree(full)
+			dir, err := getDir(filepath.Join(projectPath, entry.Name()))
 			if err != nil {
-				return vfs.Directory{}, err
+				return nil, err
 			}
 
-			dir.Directories = append(dir.Directories, sub)
+			project.Dirs = append(project.Dirs, *dir)
+		} else {
+			file, err := getFile(filepath.Join(projectPath, entry.Name()))
+			if err != nil {
+				return nil, err
+			}
 
-			continue
+			project.Files = append(project.Files, *file)
 		}
-
-		blocks, err := parseBlocks(full)
-		if err != nil {
-			return vfs.Directory{}, err
-		}
-
-		fileMode, _ := entry.Info()
-
-		dir.Files = append(dir.Files, vfs.File{
-			Name:   entry.Name(),
-			Mode:   fileMode.Mode(),
-			Blocks: blocks,
-		})
 	}
 
-	return dir, nil
+	return &project, nil
 }
 
-func parseBlocks(path string) (vfs.Blocks, error) {
+func getFile(path string) (*vfs.File, error) {
+	blocks, err := getBlocks(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &vfs.File{
+		Name:   filepath.Base(path),
+		Blocks: blocks,
+	}, nil
+}
+
+func getBlocks(path string) ([]vfs.Block, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
-	blocks := vfs.Blocks{}
-	var (
-		inBlock bool
-		name    string
-		btype   vfs.BlockType
-		buf     []string
-	)
+	blocks := make([]vfs.Block, 0)
+
+	var inBlock bool
+	var blockName string
+	var blockType vfs.BlockType
+	var buf []string
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.HasPrefix(line, "// mb ") || strings.HasPrefix(line, "//mb ") {
+		if strings.HasPrefix(line, "// start ") {
 			inBlock = true
-			name = ""
-			btype = vfs.BlockTypeOverwrite
 			buf = nil
 
-			for _, tok := range strings.Fields(line) {
-				if strings.HasPrefix(tok, "name:") {
-					name = strings.TrimPrefix(tok, "name:")
-				} else if strings.HasPrefix(tok, "type:") {
-					if strings.TrimPrefix(tok, "type:") == "merge" {
-						btype = vfs.BlockTypeMerge
-					}
-				}
-			}
-			continue
-		}
+			blockName = getBlockName(line)
+			blockType = getBlockType(line)
+		} else if line == "// end" && inBlock {
+			blocks = append(blocks, vfs.Block{
+				Name: blockName,
+				Type: blockType,
+				Data: buf,
+			})
 
-		if line == "// mbend" || line == "//mbend" {
-			if inBlock && name != "" {
-				blocks[name] = vfs.Block{
-					Data: []byte(strings.Join(buf, "\n") + "\n"),
-					Type: btype,
-				}
-			}
 			inBlock = false
-			continue
-		}
-
-		if inBlock {
+		} else if inBlock {
 			buf = append(buf, line)
 		}
 	}
 
 	return blocks, scanner.Err()
+}
+
+func getBlockName(line string) string {
+	for _, tok := range strings.Fields(line) {
+		if strings.HasPrefix(tok, "name:") {
+			return strings.TrimPrefix(tok, "name:")
+		}
+	}
+
+	panic("No block name in line")
+}
+
+func getBlockType(line string) vfs.BlockType {
+	blockType := ""
+	for _, tok := range strings.Fields(line) {
+		if strings.HasPrefix(tok, "type:") {
+			blockType = strings.TrimPrefix(tok, "type:")
+		}
+	}
+
+	switch blockType {
+	case "merge":
+		return vfs.BlockTypeMerge
+	case "add":
+		return vfs.BlockTypeAdd
+	default:
+		return vfs.BlockTypeOverwrite
+	}
+}
+
+func getDir(path string) (*vfs.Directory, error) {
+	dir := vfs.Directory{
+		Name: filepath.Base(path),
+	}
+
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			sub, err := getDir(filepath.Join(path, entry.Name()))
+			if err != nil {
+				return nil, err
+			}
+
+			dir.Dirs = append(dir.Dirs, *sub)
+		} else {
+			file, err := getFile(filepath.Join(path, entry.Name()))
+			if err != nil {
+				return nil, err
+			}
+
+			dir.Files = append(dir.Files, *file)
+		}
+	}
+
+	return &dir, nil
 }

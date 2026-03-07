@@ -1,0 +1,28 @@
+name: folder2
+files:
+    - name: main
+      blocks:
+        - name: "1"
+          type: 0
+          data:
+            - folder2 line1 should overwrite
+        - name: "2"
+          type: 2
+          data:
+            - "\tline1"
+            - "\tline2"
+            - "\tline4"
+        - name: "3"
+          type: 0
+          data:
+            - folder2 line 3 should overwrite
+dirs:
+    - name: subFolder1
+      files:
+        - name: subfile1
+          blocks:
+            - name: hehe
+              type: 2
+              data:
+                - here it is hah?
+      dirs: []

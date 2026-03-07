@@ -38,7 +38,7 @@ func mergeProjects(projects []vfs.Project) vfs.Project {
 	dirGroups := map[string][]vfs.Directory{}
 	dirNames := map[string][]string{}
 	for _, p := range projects {
-		for _, d := range p.Directories {
+		for _, d := range p.Dirs {
 			dirGroups[d.Name] = append(dirGroups[d.Name], d)
 			dirNames[d.Name] = append(dirNames[d.Name], p.Name)
 		}
@@ -50,8 +50,8 @@ func mergeProjects(projects []vfs.Project) vfs.Project {
 	}
 
 	return vfs.Project{
-		Files:       mergedFiles,
-		Directories: mergedDirs,
+		Files: mergedFiles,
+		Dirs:  mergedDirs,
 	}
 }
 
@@ -70,19 +70,6 @@ func mergeFiles(files []vfs.File, names []string, path string) vfs.File {
 type namedBlock struct {
 	name  string
 	block vfs.Block
-}
-
-func blockTypeName(t vfs.BlockType) string {
-	switch t {
-	case vfs.BlockTypeOverwrite:
-		return "overwrite"
-	case vfs.BlockTypeAdd:
-		return "add"
-	case vfs.BlockTypeMerge:
-		return "merge"
-	default:
-		return "unknown"
-	}
 }
 
 func mergeBlocks(blocksList []vfs.Blocks, names []string, path string) vfs.Blocks {
@@ -114,7 +101,7 @@ func mergeBlocks(blocksList []vfs.Blocks, names []string, path string) vfs.Block
 			}
 		}
 		if hasMixed {
-			fmt.Fprintf(os.Stderr, "warning: mixed block types at %s:%s\n", path, k)
+			fmt.Fprintf(os.Stderr, "WARNING: mixed block types at %s:%s\n", path, k)
 			for _, nb := range collected {
 				fmt.Fprintf(os.Stderr, "  %s: %s\n", nb.name, blockTypeName(nb.block.Type))
 			}
@@ -171,7 +158,7 @@ func mergeDirs(dirs []vfs.Directory, names []string, path string) vfs.Directory 
 	dirGroups := map[string][]vfs.Directory{}
 	dirSourceNames := map[string][]string{}
 	for i, d := range dirs {
-		for _, sub := range d.Directories {
+		for _, sub := range d.Dirs {
 			dirGroups[sub.Name] = append(dirGroups[sub.Name], sub)
 			dirSourceNames[sub.Name] = append(dirSourceNames[sub.Name], names[i])
 		}
@@ -182,9 +169,9 @@ func mergeDirs(dirs []vfs.Directory, names []string, path string) vfs.Directory 
 	}
 
 	return vfs.Directory{
-		Name:        dirs[0].Name,
-		Mode:        dirs[0].Mode,
-		Files:       mergedFiles,
-		Directories: mergedDirs,
+		Name:  dirs[0].Name,
+		Mode:  dirs[0].Mode,
+		Files: mergedFiles,
+		Dirs:  mergedDirs,
 	}
 }

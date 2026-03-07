@@ -13,14 +13,13 @@ func main() {
 	sourceDir := os.Args[1]
 	outputFile := os.Args[2]
 
-	tree, err := buildTree(sourceDir)
+	project, err := getProject(sourceDir)
 	if err != nil {
 		panic(err)
 	}
 
-	varName := varNameFromPath(outputFile)
-
-	writeGoFile(tree, outputFile, varName)
-
+	if err := writeYamlFile(project, outputFile); err != nil {
+		panic(err)
+	}
 	fmt.Println("generated:", outputFile)
 }
