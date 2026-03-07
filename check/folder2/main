@@ -1,0 +1,11 @@
+// mb name:1
+folder2 line1 should overwrite
+// mbend
+// mb name:2 type:merge
+	line1
+	line2
+	line4
+// mbend
+// mb name:3
+folder2 line 3 should overwrite
+// mbend

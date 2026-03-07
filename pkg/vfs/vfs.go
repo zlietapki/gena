@@ -15,15 +15,22 @@ type Block struct {
 	Type BlockType
 }
 
+type Blocks map[string]Block
+
 type File struct {
 	Name   string
 	Mode   fs.FileMode
-	Blocks map[string]Block
+	Blocks Blocks
 }
 
 type Directory struct {
 	Name        string
 	Mode        fs.FileMode
+	Files       []File
+	Directories []Directory
+}
+
+type Project struct {
 	Files       []File
 	Directories []Directory
 }

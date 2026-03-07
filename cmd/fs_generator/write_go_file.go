@@ -1,0 +1,101 @@
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/zlietapki/microboiler/pkg/vfs"
+)
+
+func varNameFromPath(path string) string {
+	name := filepath.Base(path)
+	ext := filepath.Ext(name)
+
+	return "FS" + name[:len(name)-len(ext)]
+}
+
+func writeGoFile(tree vfs.Directory, outputFile string, varName string) {
+	var buf bytes.Buffer
+
+	buf.WriteString("package genfs\n\n")
+	buf.WriteString("import (\n")
+	buf.WriteString("\t\"io/fs\"\n\n")
+	buf.WriteString("\t\"github.com/zlietapki/microboiler/pkg/vfs\"\n")
+	buf.WriteString(")\n\n")
+
+	buf.WriteString("var " + varName + " = ")
+
+	writeTree(&buf, tree, 0, true)
+
+	err := os.WriteFile(outputFile, buf.Bytes(), 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func writeTree(buf *bytes.Buffer, dir vfs.Directory, indent int, isRoot bool) {
+	if isRoot {
+		fmt.Fprintf(buf, "vfs.Project{\n")
+	} else {
+		fmt.Fprintf(buf, "{\n")
+		fmt.Fprintf(buf, "%sName: %q,\n", tabs(indent+1), dir.Name)
+		fmt.Fprintf(buf, "%sMode: fs.FileMode(%#o),\n", tabs(indent+1), dir.Mode.Perm())
+	}
+
+	// files
+	if len(dir.Files) > 0 {
+		fmt.Fprintf(buf, "%sFiles: []vfs.File{\n", tabs(indent+1))
+		for _, f := range dir.Files {
+			fmt.Fprintf(buf, "%s{\n", tabs(indent+2))
+			fmt.Fprintf(buf, "%sName: %q,\n", tabs(indent+3), f.Name)
+			fmt.Fprintf(buf, "%sMode: fs.FileMode(%#o),\n", tabs(indent+3), f.Mode.Perm())
+			fmt.Fprintf(buf, "%sBlocks: vfs.Blocks{\n", tabs(indent+3))
+			for key, block := range f.Blocks {
+				fmt.Fprintf(buf, "%s%q: vfs.Block{\n", tabs(indent+4), key)
+				fmt.Fprintf(buf, "%sType: %s,\n", tabs(indent+5), blockTypeName(block.Type))
+				fmt.Fprintf(buf, "%sData: []byte(%q),\n", tabs(indent+5), string(block.Data))
+				fmt.Fprintf(buf, "%s},\n", tabs(indent+4))
+			}
+			fmt.Fprintf(buf, "%s},\n", tabs(indent+3))
+			fmt.Fprintf(buf, "%s},\n", tabs(indent+2))
+		}
+
+		fmt.Fprintf(buf, "%s},\n", tabs(indent+1))
+	} else {
+		fmt.Fprintf(buf, "%sFiles: nil,\n", tabs(indent+1))
+	}
+
+	// directories
+	if len(dir.Directories) > 0 {
+		fmt.Fprintf(buf, "%sDirectories: []vfs.Directory{\n", tabs(indent+1))
+
+		for _, d := range dir.Directories {
+			buf.WriteString(tabs(indent + 2))
+			writeTree(buf, d, indent+2, false)
+			buf.WriteString(",\n")
+		}
+
+		fmt.Fprintf(buf, "%s},\n", tabs(indent+1))
+	} else {
+		fmt.Fprintf(buf, "%sDirectories: nil,\n", tabs(indent+1))
+	}
+
+	fmt.Fprintf(buf, "%s}", tabs(indent))
+}
+
+func blockTypeName(t vfs.BlockType) string {
+	switch t {
+	case vfs.BlockTypeMerge:
+		return "vfs.BlockTypeMerge"
+	case vfs.BlockTypeAdd:
+		return "vfs.BlockTypeAdd"
+	default:
+		return "vfs.BlockTypeOverwrite"
+	}
+}
+
+func tabs(n int) string {
+	return string(bytes.Repeat([]byte("\t"), n))
+}
