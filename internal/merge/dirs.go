@@ -111,17 +111,3 @@ func block(blocks ...vfs.Block) vfs.Block {
 
 	return result
 }
-
-func lines(result []string, b []string) []string {
-	seen := map[string]bool{}
-
-	var data []string
-	for _, line := range append(result, b...) {
-		if _, ok := seen[line]; !ok {
-			seen[line] = true
-			data = append(data, line)
-		}
-	}
-
-	return data
-}
