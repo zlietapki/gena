@@ -1,8 +1,8 @@
-package main
+package merge
 
 import "github.com/zlietapki/microboiler/internal/vfs"
 
-func mergeDirs(dirs ...vfs.Directory) vfs.Directory {
+func Dirs(dirs ...vfs.Directory) vfs.Directory {
 	if len(dirs) == 0 {
 		return vfs.Directory{}
 	}
@@ -10,22 +10,22 @@ func mergeDirs(dirs ...vfs.Directory) vfs.Directory {
 	for _, d := range dirs[1:] {
 		result = vfs.Directory{
 			Name:  result.Name,
-			Files: mergeFileSlices(result.Files, d.Files),
-			Dirs:  mergeDirSlices(result.Dirs, d.Dirs),
+			Files: fileSlices(result.Files, d.Files),
+			Dirs:  dirSlices(result.Dirs, d.Dirs),
 		}
 	}
 	return result
 }
 
-func mergeFileSlices(slices ...[]vfs.File) []vfs.File {
+func fileSlices(slices ...[]vfs.File) []vfs.File {
 	index := map[string]vfs.File{}
-	order := []string{}
+	var order []string
 	for _, files := range slices {
 		for _, f := range files {
 			if existing, ok := index[f.Name]; ok {
 				index[f.Name] = vfs.File{
 					Name:   f.Name,
-					Blocks: mergeBlockSlices(existing.Blocks, f.Blocks),
+					Blocks: blockSlices(existing.Blocks, f.Blocks),
 				}
 			} else {
 				order = append(order, f.Name)
@@ -40,13 +40,13 @@ func mergeFileSlices(slices ...[]vfs.File) []vfs.File {
 	return result
 }
 
-func mergeDirSlices(slices ...[]vfs.Directory) []vfs.Directory {
+func dirSlices(slices ...[]vfs.Directory) []vfs.Directory {
 	index := map[string]vfs.Directory{}
-	order := []string{}
+	var order []string
 	for _, dirs := range slices {
 		for _, d := range dirs {
 			if existing, ok := index[d.Name]; ok {
-				index[d.Name] = mergeDirs(existing, d)
+				index[d.Name] = Dirs(existing, d)
 			} else {
 				order = append(order, d.Name)
 				index[d.Name] = d
@@ -60,13 +60,13 @@ func mergeDirSlices(slices ...[]vfs.Directory) []vfs.Directory {
 	return result
 }
 
-func mergeBlockSlices(slices ...[]vfs.Block) []vfs.Block {
+func blockSlices(slices ...[]vfs.Block) []vfs.Block {
 	index := map[string]vfs.Block{}
-	order := []string{}
+	var order []string
 	for _, blocks := range slices {
 		for _, blk := range blocks {
 			if existing, ok := index[blk.Name]; ok {
-				index[blk.Name] = mergeBlock(existing, blk)
+				index[blk.Name] = block(existing, blk)
 			} else {
 				order = append(order, blk.Name)
 				index[blk.Name] = blk
@@ -80,7 +80,7 @@ func mergeBlockSlices(slices ...[]vfs.Block) []vfs.Block {
 	return result
 }
 
-func mergeBlock(blocks ...vfs.Block) vfs.Block {
+func block(blocks ...vfs.Block) vfs.Block {
 	if len(blocks) == 0 {
 		return vfs.Block{}
 	}
@@ -97,14 +97,8 @@ func mergeBlock(blocks ...vfs.Block) vfs.Block {
 				Data: append(result.Data, b.Data...),
 			}
 		case vfs.BlockTypeMerge:
-			seen := map[string]struct{}{}
-			var data []string
-			for _, line := range append(result.Data, b.Data...) {
-				if _, ok := seen[line]; !ok {
-					seen[line] = struct{}{}
-					data = append(data, line)
-				}
-			}
+			data := lines(result.Data, b.Data)
+
 			result = vfs.Block{
 				Name: result.Name,
 				Type: result.Type,
@@ -116,4 +110,18 @@ func mergeBlock(blocks ...vfs.Block) vfs.Block {
 	}
 
 	return result
+}
+
+func lines(result []string, b []string) []string {
+	seen := map[string]bool{}
+
+	var data []string
+	for _, line := range append(result, b...) {
+		if _, ok := seen[line]; !ok {
+			seen[line] = true
+			data = append(data, line)
+		}
+	}
+
+	return data
 }

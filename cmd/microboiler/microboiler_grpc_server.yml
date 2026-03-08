@@ -141,27 +141,20 @@ files:
             - '      - go generate ./...'
     - name: go.mod
       blocks:
-        - name: allstart
+        - name: gomod
           type: 0
           data:
-            - module github.com/zlietapki/microboiler_grpc_server
+            - module github.com/zlietapki/microboiler
             - ""
-            - go 1.25.0
+            - go 1.26.1
             - ""
+        - name: deps
+          type: 2
+          data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
             - "\tgithub.com/zlietapki/microboiler_api_contracts v0.0.2"
             - "\tgoogle.golang.org/grpc v1.79.2"
-            - )
-            - ""
-            - require (
-            - "\tgithub.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect"
-            - "\tgolang.org/x/net v0.48.0 // indirect"
-            - "\tgolang.org/x/sys v0.39.0 // indirect"
-            - "\tgolang.org/x/text v0.34.0 // indirect"
-            - "\tgoogle.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57 // indirect"
-            - "\tgoogle.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect"
-            - "\tgoogle.golang.org/protobuf v1.36.11 // indirect"
             - )
     - name: go.sum
       blocks: []
@@ -184,12 +177,12 @@ dirs:
                     - "\t\"os/signal\""
                     - "\t\"syscall\""
                     - ""
+                    - "\t\"github.com/zlietapki/microboiler/internal/config\""
+                    - "\t\"github.com/zlietapki/microboiler/internal/grpc_handler\""
+                    - "\t\"github.com/zlietapki/microboiler/internal/repository\""
+                    - "\t\"github.com/zlietapki/microboiler/internal/usecase\""
+                    - "\t\"github.com/zlietapki/microboiler/pkg/grpcserver\""
                     - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
-                    - "\t\"github.com/zlietapki/microboiler_grpc_server/internal/config\""
-                    - "\t\"github.com/zlietapki/microboiler_grpc_server/internal/grpc_handler\""
-                    - "\t\"github.com/zlietapki/microboiler_grpc_server/internal/repository\""
-                    - "\t\"github.com/zlietapki/microboiler_grpc_server/internal/usecase\""
-                    - "\t\"github.com/zlietapki/microboiler_grpc_server/pkg/grpcserver\""
                     - "\t\"google.golang.org/grpc\""
                     - )
                     - ""
@@ -315,8 +308,8 @@ dirs:
                     - package grpc_handler
                     - ""
                     - import (
+                    - "\t\"github.com/zlietapki/microboiler/internal/domain\""
                     - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
-                    - "\t\"github.com/zlietapki/microboiler_grpc_server/internal/domain\""
                     - )
                     - ""
                     - type Handler struct {
@@ -357,7 +350,7 @@ dirs:
                   data:
                     - package repository
                     - ""
-                    - import "github.com/zlietapki/microboiler_grpc_server/internal/domain"
+                    - import "github.com/zlietapki/microboiler/internal/domain"
                     - ""
                     - var _ domain.IRepository = (*Repo)(nil) // compile-time check
                     - ""
@@ -397,7 +390,7 @@ dirs:
                   data:
                     - package usecase
                     - ""
-                    - import "github.com/zlietapki/microboiler_grpc_server/internal/domain"
+                    - import "github.com/zlietapki/microboiler/internal/domain"
                     - ""
                     - var _ domain.IUsecase = (*UC)(nil) // compile-time check
                     - ""

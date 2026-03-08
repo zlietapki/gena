@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/zlietapki/microboiler/internal/domain"
+	"github.com/zlietapki/microboiler/internal/merge"
 	"github.com/zlietapki/microboiler/internal/vfs"
 	"gopkg.in/yaml.v3"
 )
@@ -65,7 +66,7 @@ func main() {
 		projects = append(projects, proj)
 	}
 
-	result := mergeDirs(projects...)
+	result := merge.Dirs(projects...)
 	result.Name = opts.ProjectName
 
 	err = createFileSystem(result, "/tmp/some")

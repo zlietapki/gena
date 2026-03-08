@@ -164,21 +164,19 @@ files:
             - '      - bin/oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
     - name: go.mod
       blocks:
-        - name: all
+        - name: gomod
           type: 0
           data:
-            - module github.com/zlietapki/microboiler_rest_server
+            - module github.com/zlietapki/boilerplate
             - ""
             - go 1.26.1
             - ""
+        - name: deps
+          type: 2
+          data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
             - "\tgithub.com/labstack/echo/v5 v5.0.4"
-            - )
-            - ""
-            - require (
-            - "\tgolang.org/x/text v0.34.0 // indirect"
-            - "\tgolang.org/x/time v0.14.0 // indirect"
             - )
     - name: go.sum
       blocks: []
