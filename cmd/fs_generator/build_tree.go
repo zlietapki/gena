@@ -40,6 +40,9 @@ func getDir(path string) (*vfs.Directory, error) {
 			if !isTextFile(filePath) {
 				continue
 			}
+			if ignoreFile(entry.Name()) {
+				continue
+			}
 			file, err := getFile(filePath)
 			if err != nil {
 				return nil, err
@@ -50,6 +53,14 @@ func getDir(path string) (*vfs.Directory, error) {
 	}
 
 	return &dir, nil
+}
+
+func ignoreFile(name string) bool {
+	if name == "go.sum" {
+		return true
+	}
+
+	return false
 }
 
 func isTextFile(filePath string) bool {
@@ -100,19 +111,29 @@ func getBlocks(path string) ([]vfs.Block, error) {
 	var blockName string
 	var blockType vfs.BlockType
 	var buf []string
+	var wholeFile []string
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
 
+		wholeFile = append(wholeFile, line)
+
 		if isStartBlock(finename, ext, line) {
+			// старт нового блока это неявный конец предыдущего
+			if inBlock {
+				blocks = append(blocks, vfs.Block{
+					Name: blockName,
+					Type: blockType,
+					Data: buf,
+				})
+			}
 			// start block
 			inBlock = true
 			buf = nil
 
 			blockName = getBlockName(line)
 			blockType = getBlockType(line)
-
 		} else if isEndBlock(finename, ext, line) && inBlock {
 			blocks = append(blocks, vfs.Block{
 				Name: blockName,
@@ -126,10 +147,21 @@ func getBlocks(path string) ([]vfs.Block, error) {
 		}
 	}
 
+	// file with no blocks means single block with all file content
+	if len(blocks) == 0 {
+		blocks = append(blocks, vfs.Block{
+			Name: "noblocks",
+			Type: vfs.BlockTypeOverwrite,
+			Data: wholeFile,
+		})
+	}
+
 	return blocks, scanner.Err()
 }
 
 func isStartBlock(finename, ext, line string) bool {
+	line = strings.TrimSpace(line)
+
 	if ext == ".go" && isRegexp(line, `^//\s?start`) {
 		return true
 	}
@@ -166,6 +198,8 @@ func isStartBlock(finename, ext, line string) bool {
 }
 
 func isEndBlock(finename, ext, line string) bool {
+	line = strings.TrimSpace(line)
+
 	if ext == ".go" && isRegexp(line, `^//\s?end`) {
 		return true
 	}

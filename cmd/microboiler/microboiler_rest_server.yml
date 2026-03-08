@@ -2,17 +2,23 @@ name: microboiler_rest_server
 files:
     - name: .env
       blocks:
-        - name: all
-          type: 0
+        - name: vars
+          type: 1
           data:
             - HTTP_LISTEN=:8080
+        - name: common
+          type: 0
+          data:
             - ENV=local
     - name: .env.example
       blocks:
-        - name: all
-          type: 0
+        - name: vars
+          type: 1
           data:
             - HTTP_LISTEN=:8080
+        - name: common
+          type: 0
+          data:
             - ENV=local
     - name: .gitignore
       blocks:
@@ -112,7 +118,7 @@ files:
             - ""
     - name: Taskfile.yml
       blocks:
-        - name: all
+        - name: common
           type: 0
           data:
             - 'version: ''3'''
@@ -122,26 +128,13 @@ files:
             - '    cmds:'
             - '      - task: build'
             - ""
-            - '  tools:'
-            - '    desc: Install tool bins'
-            - '    run: once'
-            - '    env:'
-            - '      GOBIN:'
-            - '        sh: "echo `pwd`/bin"'
-            - '    cmds:'
-            - '      - go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.6.0'
-            - '    sources: # run if changed'
-            - '      - Taskfile.yml'
-            - '    generates: # run if missing'
-            - '      - "bin/oapi-codegen"'
-            - ""
             - '  build:'
-            - '    desc: Build the server'
+            - '    desc: Build project'
             - '    cmds:'
             - '      - go build -o bin/server ./cmd/server'
             - ""
             - '  run:'
-            - '    desc: Run server'
+            - '    desc: Run project'
             - '    cmds:'
             - '      - go run ./cmd/server'
             - ""
@@ -155,11 +148,26 @@ files:
             - '    cmds:'
             - '      - go fmt ./...'
             - '      - go vet ./...'
+        - name: gen_rest_models
+          type: 0
+          data:
+            - '  oapi_tools:'
+            - '    desc: Install tool bins'
+            - '    run: once'
+            - '    env:'
+            - '      GOBIN:'
+            - '        sh: "echo `pwd`/bin"'
+            - '    cmds:'
+            - '      - go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.6.0'
+            - '    sources: # run if changed'
+            - '      - Taskfile.yml'
+            - '    generates: # run if missing'
+            - '      - "bin/oapi-codegen"'
             - ""
             - '  generate_models:'
             - '    desc: Generate models'
             - '    deps:'
-            - '      - tools'
+            - '      - oapi_tools'
             - '    cmds:'
             - '      - bin/oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
     - name: go.mod
@@ -178,8 +186,6 @@ files:
             - "\tgithub.com/joho/godotenv v1.5.1"
             - "\tgithub.com/labstack/echo/v5 v5.0.4"
             - )
-    - name: go.sum
-      blocks: []
 dirs:
     - name: api
       files:
@@ -262,7 +268,12 @@ dirs:
           files:
             - name: main.go
               blocks:
-                - name: "2"
+                - name: top
+                  type: 0
+                  data:
+                    - package main
+                    - ""
+                - name: imports
                   type: 2
                   data:
                     - import (
@@ -271,14 +282,14 @@ dirs:
                     - "\t\"os/signal\""
                     - "\t\"syscall\""
                     - ""
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/config\""
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/repository\""
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/rest_handler\""
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/usecase\""
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/pkg/httpserver\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/config\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/repository\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/rest_handler\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/usecase\""
+                    - "\t\"github.com/zlietapki/boilerplate/pkg/httpserver\""
                     - )
                     - ""
-                - name: "3"
+                - name: main
                   type: 0
                   data:
                     - func main() {
@@ -287,6 +298,9 @@ dirs:
                     - "\trepo := repository.New()"
                     - "\tuc := usecase.New(repo)"
                     - ""
+                - name: handler
+                  type: 1
+                  data:
                     - "\trestHandler := rest_handler.New(uc)"
                     - ""
                     - "\thttpServer := httpserver.New(cfg.HTTPListen)"
@@ -298,12 +312,24 @@ dirs:
                     - "\thttpErrCh := httpServer.Start()"
                     - "\tslog.Info(\"HTTP listening\", \"addr\", cfg.HTTPListen)"
                     - ""
+                - name: signals
+                  type: 0
+                  data:
                     - "\tsignals := make(chan os.Signal, 1)"
                     - "\tsignal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)"
+                    - ""
                     - "\tselect {"
                     - "\tcase <-signals:"
+                    - ""
+                - name: signals_handler
+                  type: 1
+                  data:
                     - "\tcase err := <-httpErrCh:"
                     - "\t\tpanic(\"http server\" + err.Error())"
+                    - ""
+                - name: bottom
+                  type: 0
+                  data:
                     - "\t}"
                     - '}'
                     - ""
@@ -315,7 +341,7 @@ dirs:
           files:
             - name: config.go
               blocks:
-                - name: all
+                - name: top
                   type: 0
                   data:
                     - package config
@@ -327,16 +353,28 @@ dirs:
                     - )
                     - ""
                     - type Config struct {
+                - name: struct
+                  type: 1
+                  data:
                     - "\tHTTPListen string"
-                    - "\tEnv        string"
+                - name: body
+                  type: 0
+                  data:
+                    - "\tEnv string"
                     - '}'
                     - ""
                     - func New() *Config {
                     - "\tgodotenv.Load()"
                     - ""
                     - "\treturn &Config{"
+                - name: return
+                  type: 1
+                  data:
                     - "\t\tHTTPListen: getEnv(\"HTTP_LISTEN\", \":8080\"),"
-                    - "\t\tEnv:        getEnv(\"ENV\", \"local\"),"
+                - name: post_return
+                  type: 0
+                  data:
+                    - "\t\tEnv: getEnv(\"ENV\", \"local\"),"
                     - "\t}"
                     - '}'
                     - ""
@@ -353,7 +391,7 @@ dirs:
           files:
             - name: errors.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package domain
@@ -364,10 +402,9 @@ dirs:
                     - "\tErrNotFound = errors.New(\"not found\")"
                     - "\tErrConflict = errors.New(\"conflict\")"
                     - )
-                    - ""
             - name: models.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package domain
@@ -377,7 +414,6 @@ dirs:
                     - "\tName  string `json:\"name\"`"
                     - "\tEmail string `json:\"email\"`"
                     - '}'
-                    - ""
             - name: repository.go
               blocks:
                 - name: all
@@ -385,35 +421,64 @@ dirs:
                   data:
                     - package domain
                     - ""
-                    - type Repository interface {
+                    - type IRepository interface {
+                - name: repo_methods
+                  type: 1
+                  data:
                     - "\tFindAll() ([]User, error)"
                     - "\tSave(*User) error"
+                - name: post_repo_methods
+                  type: 0
+                  data:
+                    - '}'
+                    - ""
+            - name: usecase.go
+              blocks:
+                - name: top
+                  type: 0
+                  data:
+                    - package domain
+                    - ""
+                - name: imports
+                  type: 2
+                  data: []
+                - name: usecase
+                  type: 0
+                  data:
+                    - type IUsecase interface {
+                - name: methods
+                  type: 2
+                  data:
+                    - "\tGetAll() ([]User, error)"
+                    - "\tCreate(name, email string) (*User, error)"
+                - name: post_methods
+                  type: 0
+                  data:
                     - '}'
                     - ""
           dirs: []
         - name: repository
           files:
-            - name: repo.go
+            - name: m_findall.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package repository
                     - ""
-                    - import "github.com/zlietapki/microboiler_rest_server/internal/domain"
-                    - ""
-                    - type Repo struct {
-                    - "\tusers  []domain.User"
-                    - "\tnextID int"
-                    - '}'
-                    - ""
-                    - func New() *Repo {
-                    - "\treturn &Repo{nextID: 1}"
-                    - '}'
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
                     - ""
                     - func (r *Repo) FindAll() ([]domain.User, error) {
                     - "\treturn r.users, nil"
                     - '}'
+            - name: m_save.go
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package repository
+                    - ""
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
                     - ""
                     - func (r *Repo) Save(u *domain.User) error {
                     - "\tu.ID = r.nextID"
@@ -421,20 +486,60 @@ dirs:
                     - "\tr.users = append(r.users, *u)"
                     - "\treturn nil"
                     - '}'
+            - name: repo.go
+              blocks:
+                - name: top
+                  type: 0
+                  data:
+                    - package repository
+                    - ""
+                - name: imports
+                  type: 2
+                  data:
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
+                    - ""
+                - name: post_imports
+                  type: 0
+                  data:
+                    - ""
+                    - var _ domain.IRepository = (*Repo)(nil) // compile-time check
+                    - ""
+                    - type Repo struct {
+                - name: repo_struct
+                  type: 2
+                  data:
+                    - "\tusers  []domain.User"
+                    - "\tnextID int"
+                - name: post_repo_struct
+                  type: 0
+                  data:
+                    - '}'
+                    - ""
+                    - func New() *Repo {
+                    - "\treturn &Repo{"
+                - name: repo_init
+                  type: 2
+                  data:
+                    - "\t\tnextID: 1,"
+                - name: post_repo_init
+                  type: 0
+                  data:
+                    - "\t}"
+                    - '}'
                     - ""
           dirs: []
         - name: rest_handler
           files:
             - name: convert.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package rest_handler
                     - ""
                     - import (
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/domain\""
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/rest_models\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/rest_models\""
                     - )
                     - ""
                     - func domainUserToRestAPI(u *domain.User) rest_models.User {
@@ -454,10 +559,9 @@ dirs:
                     - ""
                     - "\treturn result"
                     - '}'
-                    - ""
             - name: m_create_user.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package rest_handler
@@ -466,7 +570,7 @@ dirs:
                     - "\t\"net/http\""
                     - ""
                     - "\t\"github.com/labstack/echo/v5\""
-                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/rest_models\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/rest_models\""
                     - )
                     - ""
                     - func (h *UserHandler) CreateUser(c *echo.Context) error {
@@ -482,10 +586,9 @@ dirs:
                     - ""
                     - "\treturn c.JSON(http.StatusCreated, domainUserToRestAPI(user))"
                     - '}'
-                    - ""
             - name: m_get_users.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package rest_handler
@@ -504,61 +607,99 @@ dirs:
                     - ""
                     - "\treturn c.JSON(http.StatusOK, domainUsersToRestAPI(users))"
                     - '}'
-                    - ""
             - name: rest_handler.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package rest_handler
                     - ""
-                    - import "github.com/zlietapki/microboiler_rest_server/internal/usecase"
+                    - import "github.com/zlietapki/boilerplate/internal/usecase"
                     - ""
                     - type UserHandler struct {
-                    - "\tuc *usecase.UserUseCase"
+                    - "\tuc *usecase.Usecase"
                     - '}'
                     - ""
-                    - func New(uc *usecase.UserUseCase) *UserHandler {
+                    - func New(uc *usecase.Usecase) *UserHandler {
                     - "\treturn &UserHandler{uc: uc}"
                     - '}'
-                    - ""
           dirs: []
         - name: rest_models
           files:
             - name: models.gen.go
-              blocks: []
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - // Package rest_models provides primitives to interact with the openapi HTTP API.
+                    - //
+                    - // Code generated by github.com/oapi-codegen/oapi-codegen/v2 version v2.6.0 DO NOT EDIT.
+                    - package rest_models
+                    - ""
+                    - // CreateUserRequest defines model for CreateUserRequest.
+                    - type CreateUserRequest struct {
+                    - "\tEmail string `json:\"email\"`"
+                    - "\tName  string `json:\"name\"`"
+                    - '}'
+                    - ""
+                    - // User defines model for User.
+                    - type User struct {
+                    - "\tEmail string `json:\"email\"`"
+                    - "\tId    int    `json:\"id\"`"
+                    - "\tName  string `json:\"name\"`"
+                    - '}'
+                    - ""
+                    - // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
+                    - type CreateUserJSONRequestBody = CreateUserRequest
           dirs: []
         - name: usecase
           files:
-            - name: uc.go
+            - name: m_create.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package usecase
                     - ""
-                    - import "github.com/zlietapki/microboiler_rest_server/internal/domain"
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
                     - ""
-                    - type UserUseCase struct {
-                    - "\trepo domain.Repository"
-                    - '}'
-                    - ""
-                    - func New(repo domain.Repository) *UserUseCase {
-                    - "\treturn &UserUseCase{repo: repo}"
-                    - '}'
-                    - ""
-                    - func (uc *UserUseCase) GetAll() ([]domain.User, error) {
-                    - "\treturn uc.repo.FindAll()"
-                    - '}'
-                    - ""
-                    - func (uc *UserUseCase) Create(name, email string) (*domain.User, error) {
+                    - func (uc *Usecase) Create(name, email string) (*domain.User, error) {
                     - "\tu := &domain.User{Name: name, Email: email}"
                     - "\tif err := uc.repo.Save(u); err != nil {"
                     - "\t\treturn nil, err"
                     - "\t}"
                     - "\treturn u, nil"
                     - '}'
+            - name: m_getall.go
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package usecase
                     - ""
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
+                    - ""
+                    - func (uc *Usecase) GetAll() ([]domain.User, error) {
+                    - "\treturn uc.repo.FindAll()"
+                    - '}'
+            - name: uc.go
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package usecase
+                    - ""
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
+                    - ""
+                    - var _ domain.IUsecase = (*Usecase)(nil) // compile-time check
+                    - ""
+                    - type Usecase struct {
+                    - "\trepo domain.IRepository"
+                    - '}'
+                    - ""
+                    - func New(repo domain.IRepository) *Usecase {
+                    - "\treturn &Usecase{repo: repo}"
+                    - '}'
           dirs: []
     - name: pkg
       files: []
@@ -567,7 +708,7 @@ dirs:
           files:
             - name: http_server.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package httpserver
@@ -578,8 +719,6 @@ dirs:
                     - "\t\"github.com/labstack/echo/v5\""
                     - "\t\"github.com/labstack/echo/v5/middleware\""
                     - )
-                    - ""
-                    - //type addHandlerFunc func(s *grpc.Server)
                     - ""
                     - type Server struct {
                     - "\tSrv    *echo.Echo"
@@ -609,5 +748,4 @@ dirs:
                     - func (s *Server) Stop() {
                     - ""
                     - '}'
-                    - ""
           dirs: []

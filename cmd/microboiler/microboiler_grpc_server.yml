@@ -2,11 +2,21 @@ name: microboiler_grpc_server
 files:
     - name: .env
       blocks:
-        - name: "1"
+        - name: vars
           type: 1
           data:
             - GRPC_LISTEN=:8888
-        - name: "2"
+        - name: common
+          type: 0
+          data:
+            - ENV=local
+    - name: .env.example
+      blocks:
+        - name: vars
+          type: 1
+          data:
+            - GRPC_LISTEN=:8888
+        - name: common
           type: 0
           data:
             - ENV=local
@@ -115,12 +125,12 @@ files:
             - '      - task: build'
             - ""
             - '  build:'
-            - '    desc: Build the gRPC server'
+            - '    desc: Build project'
             - '    cmds:'
             - '      - go build -o bin/server ./cmd/server'
             - ""
             - '  run:'
-            - '    desc: Run the gRPC server'
+            - '    desc: Run project'
             - '    cmds:'
             - '      - go run ./cmd/server'
             - ""
@@ -134,17 +144,12 @@ files:
             - '    cmds:'
             - '      - go fmt ./...'
             - '      - go vet ./...'
-            - ""
-            - '  generate:'
-            - '    desc: Generate code'
-            - '    cmds:'
-            - '      - go generate ./...'
     - name: go.mod
       blocks:
         - name: gomod
           type: 0
           data:
-            - module github.com/zlietapki/microboiler
+            - module github.com/zlietapki/boilerplate
             - ""
             - go 1.26.1
             - ""
@@ -156,8 +161,6 @@ files:
             - "\tgithub.com/zlietapki/microboiler_api_contracts v0.0.2"
             - "\tgoogle.golang.org/grpc v1.79.2"
             - )
-    - name: go.sum
-      blocks: []
 dirs:
     - name: cmd
       files: []
@@ -166,22 +169,25 @@ dirs:
           files:
             - name: main.go
               blocks:
-                - name: package
+                - name: top
                   type: 0
                   data:
                     - package main
                     - ""
+                - name: imports
+                  type: 2
+                  data:
                     - import (
                     - "\t\"log/slog\""
                     - "\t\"os\""
                     - "\t\"os/signal\""
                     - "\t\"syscall\""
                     - ""
-                    - "\t\"github.com/zlietapki/microboiler/internal/config\""
-                    - "\t\"github.com/zlietapki/microboiler/internal/grpc_handler\""
-                    - "\t\"github.com/zlietapki/microboiler/internal/repository\""
-                    - "\t\"github.com/zlietapki/microboiler/internal/usecase\""
-                    - "\t\"github.com/zlietapki/microboiler/pkg/grpcserver\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/config\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/grpc_handler\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/repository\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/usecase\""
+                    - "\t\"github.com/zlietapki/boilerplate/pkg/grpcserver\""
                     - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
                     - "\t\"google.golang.org/grpc\""
                     - )
@@ -195,6 +201,9 @@ dirs:
                     - "\trepo := repository.New()"
                     - "\tuc := usecase.New(repo)"
                     - ""
+                - name: handler
+                  type: 1
+                  data:
                     - "\tgrpcHandler := grpc_handler.New(uc)"
                     - ""
                     - "\tgrpcServer := grpcserver.New(cfg.GRPCListen, func(s *grpc.Server) {"
@@ -205,13 +214,23 @@ dirs:
                     - "\tslog.Info(\"gRPC listening\", \"addr\", cfg.GRPCListen)"
                     - "\tdefer grpcServer.Stop()"
                     - ""
+                - name: signals
+                  type: 0
+                  data:
                     - "\tsignals := make(chan os.Signal, 1)"
                     - "\tsignal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)"
                     - ""
                     - "\tselect {"
                     - "\tcase <-signals:"
+                    - ""
+                - name: signals_handler
+                  type: 1
+                  data:
                     - "\tcase err := <-grpcServerErrCh:"
                     - "\t\tpanic(\"gRPC server:\" + err.Error())"
+                - name: bottom
+                  type: 0
+                  data:
                     - "\t}"
                     - '}'
                     - ""
@@ -223,7 +242,7 @@ dirs:
           files:
             - name: config.go
               blocks:
-                - name: all
+                - name: top
                   type: 0
                   data:
                     - package config
@@ -235,16 +254,28 @@ dirs:
                     - )
                     - ""
                     - type Config struct {
+                - name: struct
+                  type: 1
+                  data:
                     - "\tGRPCListen string"
-                    - "\tEnv        string"
+                - name: body
+                  type: 0
+                  data:
+                    - "\tEnv string"
                     - '}'
                     - ""
                     - func New() *Config {
                     - "\tgodotenv.Load()"
                     - ""
                     - "\treturn &Config{"
+                - name: return
+                  type: 1
+                  data:
                     - "\t\tGRPCListen: getEnv(\"GRPC_LISTEN\", \":8888\"),"
-                    - "\t\tEnv:        getEnv(\"ENV\", \"local\"),"
+                - name: post_return
+                  type: 0
+                  data:
+                    - "\t\tEnv: getEnv(\"ENV\", \"local\"),"
                     - "\t}"
                     - '}'
                     - ""
@@ -261,7 +292,7 @@ dirs:
           files:
             - name: errors.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package domain
@@ -272,7 +303,6 @@ dirs:
                     - "\tErrNotFound = errors.New(\"not found\")"
                     - "\tErrConflict = errors.New(\"conflict\")"
                     - )
-                    - ""
             - name: repository.go
               blocks:
                 - name: all
@@ -281,20 +311,37 @@ dirs:
                     - package domain
                     - ""
                     - type IRepository interface {
-                    - "\t// stub: add methods per domain entity"
+                - name: repo_methods
+                  type: 1
+                  data: []
+                - name: post_repo_methods
+                  type: 0
+                  data:
                     - '}'
                     - ""
             - name: usecase.go
               blocks:
-                - name: all
+                - name: top
                   type: 0
                   data:
                     - package domain
                     - ""
+                - name: imports
+                  type: 2
+                  data:
                     - import "context"
                     - ""
+                - name: usecase
+                  type: 0
+                  data:
                     - type IUsecase interface {
+                - name: methods
+                  type: 2
+                  data:
                     - "\tHello(ctx context.Context, name string) (string, error)"
+                - name: post_methods
+                  type: 0
+                  data:
                     - '}'
                     - ""
           dirs: []
@@ -302,13 +349,13 @@ dirs:
           files:
             - name: grpc_handler.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package grpc_handler
                     - ""
                     - import (
-                    - "\t\"github.com/zlietapki/microboiler/internal/domain\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
                     - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
                     - )
                     - ""
@@ -322,10 +369,9 @@ dirs:
                     - "\t\tuc: uc,"
                     - "\t}"
                     - '}'
-                    - ""
             - name: m_hello.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package grpc_handler
@@ -339,25 +385,45 @@ dirs:
                     - func (h *Handler) Hello(ctx context.Context, req *pb.HelloReq) (*pb.HelloRes, error) {
                     - "\treturn &pb.HelloRes{}, nil"
                     - '}'
-                    - ""
           dirs: []
         - name: repository
           files:
             - name: repo.go
               blocks:
-                - name: all
+                - name: top
                   type: 0
                   data:
                     - package repository
                     - ""
-                    - import "github.com/zlietapki/microboiler/internal/domain"
+                - name: imports
+                  type: 2
+                  data:
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
+                    - ""
+                - name: post_imports
+                  type: 0
+                  data:
                     - ""
                     - var _ domain.IRepository = (*Repo)(nil) // compile-time check
                     - ""
-                    - type Repo struct{}
+                    - type Repo struct {
+                - name: repo_struct
+                  type: 2
+                  data: []
+                - name: post_repo_struct
+                  type: 0
+                  data:
+                    - '}'
                     - ""
                     - func New() *Repo {
-                    - "\treturn &Repo{}"
+                    - "\treturn &Repo{"
+                - name: repo_init
+                  type: 2
+                  data: []
+                - name: post_repo_init
+                  type: 0
+                  data:
+                    - "\t}"
                     - '}'
                     - ""
           dirs: []
@@ -365,7 +431,7 @@ dirs:
           files:
             - name: m_hello.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package usecase
@@ -375,35 +441,31 @@ dirs:
                     - "\t\"fmt\""
                     - )
                     - ""
-                    - func (u UC) Hello(ctx context.Context, name string) (string, error) {
+                    - func (u Usecase) Hello(ctx context.Context, name string) (string, error) {
                     - "\tres := fmt.Sprintf(\"Hello: %s\\n\", name)"
-                    - ""
-                    - "\t// u.repo."
                     - ""
                     - "\treturn res, nil"
                     - '}'
-                    - ""
             - name: uc.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package usecase
                     - ""
-                    - import "github.com/zlietapki/microboiler/internal/domain"
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
                     - ""
-                    - var _ domain.IUsecase = (*UC)(nil) // compile-time check
+                    - var _ domain.IUsecase = (*Usecase)(nil) // compile-time check
                     - ""
-                    - type UC struct {
+                    - type Usecase struct {
                     - "\trepo domain.IRepository"
                     - '}'
                     - ""
-                    - func New(repo domain.IRepository) *UC {
-                    - "\treturn &UC{"
+                    - func New(repo domain.IRepository) *Usecase {
+                    - "\treturn &Usecase{"
                     - "\t\trepo: repo,"
                     - "\t}"
                     - '}'
-                    - ""
           dirs: []
     - name: pkg
       files: []
@@ -412,7 +474,7 @@ dirs:
           files:
             - name: grpc_server.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package grpcserver
@@ -478,10 +540,9 @@ dirs:
                     - func (s *Server) Stop() {
                     - "\ts.srv.GracefulStop()"
                     - '}'
-                    - ""
             - name: interceptors.go
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package grpcserver
@@ -506,5 +567,4 @@ dirs:
                     - "\t\treturn handler(ctx, req)"
                     - "\t}"
                     - '}'
-                    - ""
           dirs: []

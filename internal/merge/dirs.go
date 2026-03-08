@@ -1,6 +1,8 @@
 package merge
 
-import "github.com/zlietapki/microboiler/internal/vfs"
+import (
+	"github.com/zlietapki/microboiler/internal/vfs"
+)
 
 func Dirs(dirs ...vfs.Directory) vfs.Directory {
 	if len(dirs) == 0 {
@@ -91,6 +93,9 @@ func block(blocks ...vfs.Block) vfs.Block {
 		case vfs.BlockTypeOverwrite:
 			result = b
 		case vfs.BlockTypeAdd:
+			//fmt.Printf("%+v\n", result.Data)
+			//fmt.Printf("%+v\n", b.Data)
+			//panic(123)
 			result = vfs.Block{
 				Name: result.Name,
 				Type: result.Type,
