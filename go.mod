@@ -2,7 +2,11 @@ module github.com/zlietapki/microboiler
 
 go 1.25.0
 
-require github.com/charmbracelet/huh v0.8.0
+require (
+	github.com/charmbracelet/huh v0.8.0
+	github.com/gabriel-vasile/mimetype v1.4.13
+	gopkg.in/yaml.v3 v3.0.1
+)
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -31,5 +35,4 @@ require (
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

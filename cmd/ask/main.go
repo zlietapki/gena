@@ -13,10 +13,10 @@ func main() {
 	var options []string
 	hahOpts := huh.NewMultiSelect[string]().
 		Options(
-			huh.NewOption("REST server", "web_server"),
-			huh.NewOption("REST client", "web_client"),
 			huh.NewOption("gRPC server", "grpc_server"),
 			huh.NewOption("gRPC client", "grpc_client"),
+			huh.NewOption("REST server", "web_server"),
+			huh.NewOption("REST client", "web_client"),
 			huh.NewOption("Kafka consumer", "kafka_consumer"),
 			huh.NewOption("Kafka producer", "kafka_producer"),
 			huh.NewOption("Redis", "redis"),

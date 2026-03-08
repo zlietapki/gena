@@ -1,45 +1,12 @@
 package main
 
 import (
-	_ "embed"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/zlietapki/microboiler/internal/vfs"
-	"gopkg.in/yaml.v3"
 )
-
-//go:embed microboiler_grpc_server.yml
-var folder1 string
-
-//go:embed microboiler_grpc_server.yml
-var folder2 string
-
-func main() {
-	var d1, d2 vfs.Directory
-	if err := yaml.Unmarshal([]byte(folder1), &d1); err != nil {
-		panic(err)
-	}
-	if err := yaml.Unmarshal([]byte(folder2), &d2); err != nil {
-		panic(err)
-	}
-
-	result := mergeDirs(d1, d2)
-
-	//err := createFileSystem(result, "/tmp/some")
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	out, err := yaml.Marshal(result)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Print(string(out))
-}
 
 func createFileSystem(dir vfs.Directory, path string) error {
 	dirPath := filepath.Join(path, dir.Name)
@@ -50,6 +17,7 @@ func createFileSystem(dir vfs.Directory, path string) error {
 		var sb strings.Builder
 		for _, blk := range f.Blocks {
 			sb.WriteString(strings.Join(blk.Data, "\n"))
+			sb.WriteString("\n")
 		}
 		if err := os.WriteFile(filepath.Join(dirPath, f.Name), []byte(sb.String()), 0644); err != nil {
 			return err

@@ -2,12 +2,15 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/zlietapki/microboiler/internal/vfs"
+
+	"github.com/gabriel-vasile/mimetype"
 )
 
 func getDir(path string) (*vfs.Directory, error) {
@@ -21,18 +24,23 @@ func getDir(path string) (*vfs.Directory, error) {
 	}
 
 	for _, entry := range entries {
+		filePath := filepath.Join(path, entry.Name())
+
 		if entry.IsDir() {
 			if strings.HasPrefix(entry.Name(), ".") {
 				continue
 			}
-			sub, err := getDir(filepath.Join(path, entry.Name()))
+			sub, err := getDir(filePath)
 			if err != nil {
 				return nil, err
 			}
 
 			dir.Dirs = append(dir.Dirs, *sub)
 		} else {
-			file, err := getFile(filepath.Join(path, entry.Name()))
+			if !isTextFile(filePath) {
+				continue
+			}
+			file, err := getFile(filePath)
 			if err != nil {
 				return nil, err
 			}
@@ -42,6 +50,26 @@ func getDir(path string) (*vfs.Directory, error) {
 	}
 
 	return &dir, nil
+}
+
+func isTextFile(filePath string) bool {
+	mtype, err := mimetype.DetectFile(filePath)
+	if err != nil {
+		return false
+	}
+
+	knownMimes := map[string]bool{
+		"text/plain; charset=utf-8": true,
+		"application/x-executable":  false,
+	}
+
+	if val, ok := knownMimes[mtype.String()]; ok {
+		return val
+	}
+
+	fmt.Println("Unknown MIME type:", mtype.String(), " for file:", filePath)
+	os.Exit(1)
+	return false
 }
 
 func getFile(path string) (*vfs.File, error) {
@@ -122,6 +150,10 @@ func isStartBlock(finename, ext, line string) bool {
 		return true
 	}
 
+	if finename == ".env.example" && isRegexp(line, `^;\s?start`) {
+		return true
+	}
+
 	if finename == ".gitignore" && isRegexp(line, `^#\s?start`) {
 		return true
 	}
@@ -151,6 +183,10 @@ func isEndBlock(finename, ext, line string) bool {
 	}
 
 	if finename == ".env" && isRegexp(line, `^;\s?end`) {
+		return true
+	}
+
+	if finename == ".env.example" && isRegexp(line, `^;\s?end`) {
 		return true
 	}
 

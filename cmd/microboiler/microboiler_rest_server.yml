@@ -1,0 +1,615 @@
+name: microboiler_rest_server
+files:
+    - name: .env
+      blocks:
+        - name: all
+          type: 0
+          data:
+            - HTTP_LISTEN=:8080
+            - ENV=local
+    - name: .env.example
+      blocks:
+        - name: all
+          type: 0
+          data:
+            - HTTP_LISTEN=:8080
+            - ENV=local
+    - name: .gitignore
+      blocks:
+        - name: all
+          type: 0
+          data:
+            - .idea/
+            - .claude/
+            - .task/
+            - bin/
+            - .env
+    - name: Dockerfile
+      blocks:
+        - name: all
+          type: 0
+          data:
+            - '# Builder stage'
+            - FROM golang:1.26.1-alpine3.23 AS builder
+            - ""
+            - WORKDIR /app
+            - ""
+            - COPY go.mod go.sum ./
+            - RUN go mod download
+            - ""
+            - COPY . .
+            - ""
+            - RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
+            - ""
+            - '# Runtime stage'
+            - FROM alpine:3.23
+            - ""
+            - RUN apk --no-cache add ca-certificates
+            - ""
+            - WORKDIR /app
+            - ""
+            - COPY --from=builder /app/server .
+            - COPY .env.example .env.example
+            - ""
+            - EXPOSE 8888
+            - ""
+            - CMD ["./server"]
+    - name: README.md
+      blocks:
+        - name: all)
+          type: 0
+          data:
+            - '# microboiler_grpc_server'
+            - ""
+            - Boilerplate REST microservice template. Clean architecture, standard Go project layout.
+            - ""
+            - '## Structure'
+            - ""
+            - '```'
+            - cmd/server/          — entrypoint
+            - internal/
+            - '  config/            — env-based config'
+            - '  domain/            — entities, interfaces (Repository)'
+            - '  repository/        — infrastructure stub impl'
+            - '  usecase/           — business logic'
+            - '  grpc_handler/      — gRPC transport handlers'
+            - pkg/
+            - '  grpcserver/        — gRPC server + interceptors'
+            - api/                 — proto/contract references
+            - '```'
+            - ""
+            - '## Run'
+            - ""
+            - '```bash'
+            - cp .env.example .env
+            - task run
+            - '```'
+            - ""
+            - '## Build'
+            - ""
+            - '```bash'
+            - task build
+            - '# binary: bin/server'
+            - '```'
+            - ""
+            - '## Test / Lint'
+            - ""
+            - '```bash'
+            - task test
+            - task lint
+            - '```'
+            - ""
+            - go run ./cmd/server
+            - curl http://localhost:8080/api/users
+            - 'curl -X POST http://localhost:8080/api/users -H ''Content-Type: application/json'' -d ''{"name":"Alice","email":"alice@example.com"}'''
+            - curl http://localhost:8080/api/users
+            - ""
+            - '## Health check'
+            - ""
+            - '```bash'
+            - ""
+            - '```'
+            - ""
+    - name: Taskfile.yml
+      blocks:
+        - name: all
+          type: 0
+          data:
+            - 'version: ''3'''
+            - ""
+            - 'tasks:'
+            - '  default:'
+            - '    cmds:'
+            - '      - task: build'
+            - ""
+            - '  tools:'
+            - '    desc: Install tool bins'
+            - '    run: once'
+            - '    env:'
+            - '      GOBIN:'
+            - '        sh: "echo `pwd`/bin"'
+            - '    cmds:'
+            - '      - go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.6.0'
+            - '    sources: # run if changed'
+            - '      - Taskfile.yml'
+            - '    generates: # run if missing'
+            - '      - "bin/oapi-codegen"'
+            - ""
+            - '  build:'
+            - '    desc: Build the server'
+            - '    cmds:'
+            - '      - go build -o bin/server ./cmd/server'
+            - ""
+            - '  run:'
+            - '    desc: Run server'
+            - '    cmds:'
+            - '      - go run ./cmd/server'
+            - ""
+            - '  test:'
+            - '    desc: Run tests'
+            - '    cmds:'
+            - '      - go test ./...'
+            - ""
+            - '  lint:'
+            - '    desc: Run linter'
+            - '    cmds:'
+            - '      - go fmt ./...'
+            - '      - go vet ./...'
+            - ""
+            - '  generate_models:'
+            - '    desc: Generate models'
+            - '    deps:'
+            - '      - tools'
+            - '    cmds:'
+            - '      - bin/oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
+    - name: go.mod
+      blocks:
+        - name: all
+          type: 0
+          data:
+            - module github.com/zlietapki/microboiler_rest_server
+            - ""
+            - go 1.26.1
+            - ""
+            - require (
+            - "\tgithub.com/joho/godotenv v1.5.1"
+            - "\tgithub.com/labstack/echo/v5 v5.0.4"
+            - )
+            - ""
+            - require (
+            - "\tgolang.org/x/text v0.34.0 // indirect"
+            - "\tgolang.org/x/time v0.14.0 // indirect"
+            - )
+    - name: go.sum
+      blocks: []
+dirs:
+    - name: api
+      files:
+        - name: oapi-codegen.yml
+          blocks:
+            - name: all
+              type: 0
+              data:
+                - 'package: rest_models'
+                - 'generate:'
+                - '  models: true'
+                - 'output: internal/rest_models/models.gen.go'
+        - name: swagger.yml
+          blocks:
+            - name: all
+              type: 0
+              data:
+                - 'openapi: 3.0.3'
+                - 'info:'
+                - '  title: Echo Server User API'
+                - '  version: 1.0.0'
+                - 'paths:'
+                - '  /api/users:'
+                - '    get:'
+                - '      summary: List users'
+                - '      operationId: getUsers'
+                - '      responses:'
+                - '        ''200'':'
+                - '          description: OK'
+                - '          content:'
+                - '            application/json:'
+                - '              schema:'
+                - '                type: array'
+                - '                items:'
+                - '                  $ref: ''#/components/schemas/User'''
+                - '    post:'
+                - '      summary: Create user'
+                - '      operationId: createUser'
+                - '      requestBody:'
+                - '        required: true'
+                - '        content:'
+                - '          application/json:'
+                - '            schema:'
+                - '              $ref: ''#/components/schemas/CreateUserRequest'''
+                - '      responses:'
+                - '        ''201'':'
+                - '          description: Created'
+                - '          content:'
+                - '            application/json:'
+                - '              schema:'
+                - '                $ref: ''#/components/schemas/User'''
+                - 'components:'
+                - '  schemas:'
+                - '    User:'
+                - '      type: object'
+                - '      required: [id, name, email]'
+                - '      properties:'
+                - '        id:'
+                - '          type: integer'
+                - '        name:'
+                - '          type: string'
+                - '        email:'
+                - '          type: string'
+                - '    CreateUserRequest:'
+                - '      type: object'
+                - '      required: [name, email]'
+                - '      properties:'
+                - '        name:'
+                - '          type: string'
+                - '        email:'
+                - '          type: string'
+      dirs: []
+    - name: bin
+      files: []
+      dirs: []
+    - name: cmd
+      files: []
+      dirs:
+        - name: server
+          files:
+            - name: main.go
+              blocks:
+                - name: "2"
+                  type: 2
+                  data:
+                    - import (
+                    - "\t\"log/slog\""
+                    - "\t\"os\""
+                    - "\t\"os/signal\""
+                    - "\t\"syscall\""
+                    - ""
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/config\""
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/repository\""
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/rest_handler\""
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/usecase\""
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/pkg/httpserver\""
+                    - )
+                    - ""
+                - name: "3"
+                  type: 0
+                  data:
+                    - func main() {
+                    - "\tcfg := config.New()"
+                    - ""
+                    - "\trepo := repository.New()"
+                    - "\tuc := usecase.New(repo)"
+                    - ""
+                    - "\trestHandler := rest_handler.New(uc)"
+                    - ""
+                    - "\thttpServer := httpserver.New(cfg.HTTPListen)"
+                    - ""
+                    - "\tapi := httpServer.Srv.Group(\"/api\")"
+                    - "\tapi.GET(\"/users\", restHandler.GetUsers)"
+                    - "\tapi.POST(\"/users\", restHandler.CreateUser)"
+                    - ""
+                    - "\thttpErrCh := httpServer.Start()"
+                    - "\tslog.Info(\"HTTP listening\", \"addr\", cfg.HTTPListen)"
+                    - ""
+                    - "\tsignals := make(chan os.Signal, 1)"
+                    - "\tsignal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)"
+                    - "\tselect {"
+                    - "\tcase <-signals:"
+                    - "\tcase err := <-httpErrCh:"
+                    - "\t\tpanic(\"http server\" + err.Error())"
+                    - "\t}"
+                    - '}'
+                    - ""
+          dirs: []
+    - name: internal
+      files: []
+      dirs:
+        - name: config
+          files:
+            - name: config.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package config
+                    - ""
+                    - import (
+                    - "\t\"os\""
+                    - ""
+                    - "\t\"github.com/joho/godotenv\""
+                    - )
+                    - ""
+                    - type Config struct {
+                    - "\tHTTPListen string"
+                    - "\tEnv        string"
+                    - '}'
+                    - ""
+                    - func New() *Config {
+                    - "\tgodotenv.Load()"
+                    - ""
+                    - "\treturn &Config{"
+                    - "\t\tHTTPListen: getEnv(\"HTTP_LISTEN\", \":8080\"),"
+                    - "\t\tEnv:        getEnv(\"ENV\", \"local\"),"
+                    - "\t}"
+                    - '}'
+                    - ""
+                    - func getEnv(key, fallback string) string {
+                    - "\tif v := os.Getenv(key); v != \"\" {"
+                    - "\t\treturn v"
+                    - "\t}"
+                    - ""
+                    - "\treturn fallback"
+                    - '}'
+                    - ""
+          dirs: []
+        - name: domain
+          files:
+            - name: errors.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package domain
+                    - ""
+                    - import "errors"
+                    - ""
+                    - var (
+                    - "\tErrNotFound = errors.New(\"not found\")"
+                    - "\tErrConflict = errors.New(\"conflict\")"
+                    - )
+                    - ""
+            - name: models.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package domain
+                    - ""
+                    - type User struct {
+                    - "\tID    int    `json:\"id\"`"
+                    - "\tName  string `json:\"name\"`"
+                    - "\tEmail string `json:\"email\"`"
+                    - '}'
+                    - ""
+            - name: repository.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package domain
+                    - ""
+                    - type Repository interface {
+                    - "\tFindAll() ([]User, error)"
+                    - "\tSave(*User) error"
+                    - '}'
+                    - ""
+          dirs: []
+        - name: repository
+          files:
+            - name: repo.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package repository
+                    - ""
+                    - import "github.com/zlietapki/microboiler_rest_server/internal/domain"
+                    - ""
+                    - type Repo struct {
+                    - "\tusers  []domain.User"
+                    - "\tnextID int"
+                    - '}'
+                    - ""
+                    - func New() *Repo {
+                    - "\treturn &Repo{nextID: 1}"
+                    - '}'
+                    - ""
+                    - func (r *Repo) FindAll() ([]domain.User, error) {
+                    - "\treturn r.users, nil"
+                    - '}'
+                    - ""
+                    - func (r *Repo) Save(u *domain.User) error {
+                    - "\tu.ID = r.nextID"
+                    - "\tr.nextID++"
+                    - "\tr.users = append(r.users, *u)"
+                    - "\treturn nil"
+                    - '}'
+                    - ""
+          dirs: []
+        - name: rest_handler
+          files:
+            - name: convert.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package rest_handler
+                    - ""
+                    - import (
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/domain\""
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/rest_models\""
+                    - )
+                    - ""
+                    - func domainUserToRestAPI(u *domain.User) rest_models.User {
+                    - "\treturn rest_models.User{"
+                    - "\t\tId:    u.ID,"
+                    - "\t\tName:  u.Name,"
+                    - "\t\tEmail: u.Email,"
+                    - "\t}"
+                    - '}'
+                    - ""
+                    - func domainUsersToRestAPI(users []domain.User) []rest_models.User {
+                    - "\tresult := make([]rest_models.User, len(users))"
+                    - ""
+                    - "\tfor i := range users {"
+                    - "\t\tresult[i] = domainUserToRestAPI(&users[i])"
+                    - "\t}"
+                    - ""
+                    - "\treturn result"
+                    - '}'
+                    - ""
+            - name: m_create_user.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package rest_handler
+                    - ""
+                    - import (
+                    - "\t\"net/http\""
+                    - ""
+                    - "\t\"github.com/labstack/echo/v5\""
+                    - "\t\"github.com/zlietapki/microboiler_rest_server/internal/rest_models\""
+                    - )
+                    - ""
+                    - func (h *UserHandler) CreateUser(c *echo.Context) error {
+                    - "\tvar req rest_models.CreateUserRequest"
+                    - "\tif err := c.Bind(&req); err != nil {"
+                    - "\t\treturn c.JSON(http.StatusBadRequest, map[string]string{\"error\": err.Error()})"
+                    - "\t}"
+                    - ""
+                    - "\tuser, err := h.uc.Create(req.Name, req.Email)"
+                    - "\tif err != nil {"
+                    - "\t\treturn c.JSON(http.StatusInternalServerError, map[string]string{\"error\": err.Error()})"
+                    - "\t}"
+                    - ""
+                    - "\treturn c.JSON(http.StatusCreated, domainUserToRestAPI(user))"
+                    - '}'
+                    - ""
+            - name: m_get_users.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package rest_handler
+                    - ""
+                    - import (
+                    - "\t\"net/http\""
+                    - ""
+                    - "\t\"github.com/labstack/echo/v5\""
+                    - )
+                    - ""
+                    - func (h *UserHandler) GetUsers(c *echo.Context) error {
+                    - "\tusers, err := h.uc.GetAll()"
+                    - "\tif err != nil {"
+                    - "\t\treturn c.JSON(http.StatusInternalServerError, map[string]string{\"error\": err.Error()})"
+                    - "\t}"
+                    - ""
+                    - "\treturn c.JSON(http.StatusOK, domainUsersToRestAPI(users))"
+                    - '}'
+                    - ""
+            - name: rest_handler.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package rest_handler
+                    - ""
+                    - import "github.com/zlietapki/microboiler_rest_server/internal/usecase"
+                    - ""
+                    - type UserHandler struct {
+                    - "\tuc *usecase.UserUseCase"
+                    - '}'
+                    - ""
+                    - func New(uc *usecase.UserUseCase) *UserHandler {
+                    - "\treturn &UserHandler{uc: uc}"
+                    - '}'
+                    - ""
+          dirs: []
+        - name: rest_models
+          files:
+            - name: models.gen.go
+              blocks: []
+          dirs: []
+        - name: usecase
+          files:
+            - name: uc.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package usecase
+                    - ""
+                    - import "github.com/zlietapki/microboiler_rest_server/internal/domain"
+                    - ""
+                    - type UserUseCase struct {
+                    - "\trepo domain.Repository"
+                    - '}'
+                    - ""
+                    - func New(repo domain.Repository) *UserUseCase {
+                    - "\treturn &UserUseCase{repo: repo}"
+                    - '}'
+                    - ""
+                    - func (uc *UserUseCase) GetAll() ([]domain.User, error) {
+                    - "\treturn uc.repo.FindAll()"
+                    - '}'
+                    - ""
+                    - func (uc *UserUseCase) Create(name, email string) (*domain.User, error) {
+                    - "\tu := &domain.User{Name: name, Email: email}"
+                    - "\tif err := uc.repo.Save(u); err != nil {"
+                    - "\t\treturn nil, err"
+                    - "\t}"
+                    - "\treturn u, nil"
+                    - '}'
+                    - ""
+          dirs: []
+    - name: pkg
+      files: []
+      dirs:
+        - name: httpserver
+          files:
+            - name: http_server.go
+              blocks:
+                - name: all
+                  type: 0
+                  data:
+                    - package httpserver
+                    - ""
+                    - import (
+                    - "\t\"net/http\""
+                    - ""
+                    - "\t\"github.com/labstack/echo/v5\""
+                    - "\t\"github.com/labstack/echo/v5/middleware\""
+                    - )
+                    - ""
+                    - //type addHandlerFunc func(s *grpc.Server)
+                    - ""
+                    - type Server struct {
+                    - "\tSrv    *echo.Echo"
+                    - "\tlisten string"
+                    - '}'
+                    - ""
+                    - func New(listen string, middlewares ...func(http.Handler) http.Handler) Server {
+                    - "\te := echo.New()"
+                    - "\te.Use(middleware.RequestLogger()) // use the RequestLogger middleware with slog logger"
+                    - "\te.Use(middleware.Recover())       // recover panics as errors for proper error handling"
+                    - ""
+                    - "\treturn Server{"
+                    - "\t\tSrv:    e,"
+                    - "\t\tlisten: listen,"
+                    - "\t}"
+                    - '}'
+                    - ""
+                    - func (s *Server) Start() chan error {
+                    - "\terrCh := make(chan error)"
+                    - "\tgo func() {"
+                    - "\t\terrCh <- s.Srv.Start(s.listen)"
+                    - "\t\tclose(errCh)"
+                    - "\t}()"
+                    - "\treturn errCh"
+                    - '}'
+                    - ""
+                    - func (s *Server) Stop() {
+                    - ""
+                    - '}'
+                    - ""
+          dirs: []
