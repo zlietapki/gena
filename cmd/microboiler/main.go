@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"flag"
 	"fmt"
 	"os"
 
@@ -12,24 +13,43 @@ import (
 )
 
 //go:embed microboiler_grpc_server.yml
-var microboiler_grpc_server string
+var microboilerGrpcServer string
 
 //go:embed microboiler_rest_server.yml
-var microboiler_rest_server string
+var microboilerRestServer string
 
 var optToYaml = map[string]string{
-	"grpc_server": microboiler_grpc_server,
-	"rest_server": microboiler_rest_server,
+	"grpc_server": microboilerGrpcServer,
+	"rest_server": microboilerRestServer,
 }
 
 func main() {
-	opts, err := getOpts()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	versionFlag := flag.Bool("version", false, "print version")
+	flag.BoolVar(versionFlag, "v", false, "print version")
+	skipOptionsSelect := flag.Bool("skip-options-select", false, "skip options selection")
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println("version v0.0.1")
+		os.Exit(0)
 	}
 
-	projects := []vfs.Directory{}
+	var opts domain.SelectedOpts
+	var err error
+	if *skipOptionsSelect {
+		opts = domain.SelectedOpts{
+			ProjectName: "check",
+			Options:     []string{"grpc_server", "rest_server"},
+		}
+	} else {
+		opts, err = getOpts()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+
+	var projects []vfs.Directory
 	for _, opt := range opts.Options {
 		yamlData, ok := optToYaml[opt]
 		if !ok {
@@ -53,7 +73,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Done")
+	fmt.Printf("Project boilerplate generated /tmp/some/%s\n", opts.ProjectName)
 
 	//out, err := yaml.Marshal(result)
 	//if err != nil {

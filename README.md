@@ -1,6 +1,13 @@
 Microboiler
 ===========
 
+Install
+-------
+
+```shell
+go install github.com/zlietapki/microboiler/cmd/microboiler@latest
+```
+
 Update project templates
 ------------------------
 

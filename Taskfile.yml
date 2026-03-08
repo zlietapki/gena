@@ -3,7 +3,7 @@ version: '3'
 tasks:
   default:
     cmds:
-      - task: build
+      - task: update
 
   update:
     cmds:
@@ -18,6 +18,12 @@ tasks:
     desc: Build the server
     cmds:
       - go build -o bin/microboiler ./cmd/microboiler
+
+  check:
+    deps:
+      - update
+    cmds:
+      - go run ./cmd/microboiler/ -skip-options-select
 
   lint:
     desc: Run linter
