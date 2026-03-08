@@ -1,0 +1,13 @@
+name: folder3
+files:
+    - name: .env
+      blocks:
+        - name: "1"
+          type: 1
+          data:
+            - GRPC_LISTEN=:8888
+        - name: "2"
+          type: 0
+          data:
+            - ENV=local
+dirs: []

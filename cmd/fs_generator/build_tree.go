@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/zlietapki/microboiler/internal/vfs"
@@ -21,6 +22,9 @@ func getDir(path string) (*vfs.Directory, error) {
 
 	for _, entry := range entries {
 		if entry.IsDir() {
+			if strings.HasPrefix(entry.Name(), ".") {
+				continue
+			}
 			sub, err := getDir(filepath.Join(path, entry.Name()))
 			if err != nil {
 				return nil, err
@@ -53,6 +57,9 @@ func getFile(path string) (*vfs.File, error) {
 }
 
 func getBlocks(path string) ([]vfs.Block, error) {
+	finename := filepath.Base(path)
+	ext := filepath.Ext(finename)
+
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -70,13 +77,15 @@ func getBlocks(path string) ([]vfs.Block, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.HasPrefix(line, "// start ") {
+		if isStartBlock(finename, ext, line) {
+			// start block
 			inBlock = true
 			buf = nil
 
 			blockName = getBlockName(line)
 			blockType = getBlockType(line)
-		} else if line == "// end" && inBlock {
+
+		} else if isEndBlock(finename, ext, line) && inBlock {
 			blocks = append(blocks, vfs.Block{
 				Name: blockName,
 				Type: blockType,
@@ -90,6 +99,79 @@ func getBlocks(path string) ([]vfs.Block, error) {
 	}
 
 	return blocks, scanner.Err()
+}
+
+func isStartBlock(finename, ext, line string) bool {
+	if ext == ".go" && isRegexp(line, `^//\s?start`) {
+		return true
+	}
+
+	if ext == ".yml" && isRegexp(line, `^#\s?start`) {
+		return true
+	}
+
+	if ext == ".md" && isRegexp(line, `^\[//\]: # \(start`) {
+		return true
+	}
+
+	if finename == "go.mod" && isRegexp(line, `^//\s?start`) {
+		return true
+	}
+
+	if finename == ".env" && isRegexp(line, `^;\s?start`) {
+		return true
+	}
+
+	if finename == ".gitignore" && isRegexp(line, `^#\s?start`) {
+		return true
+	}
+
+	if finename == "Dockerfile" && isRegexp(line, `^#\s?start`) {
+		return true
+	}
+
+	return false
+}
+
+func isEndBlock(finename, ext, line string) bool {
+	if ext == ".go" && isRegexp(line, `^//\s?end`) {
+		return true
+	}
+
+	if ext == ".yml" && isRegexp(line, `^#\s?end`) {
+		return true
+	}
+
+	if ext == ".md" && isRegexp(line, `^\[//\]: # \(end\)`) {
+		return true
+	}
+
+	if finename == "go.mod" && isRegexp(line, `^//\s?end`) {
+		return true
+	}
+
+	if finename == ".env" && isRegexp(line, `^;\s?end`) {
+		return true
+	}
+
+	if finename == ".gitignore" && isRegexp(line, `^#\s?end`) {
+		return true
+	}
+
+	if finename == "Dockerfile" && isRegexp(line, `^#\s?end`) {
+		return true
+	}
+
+	return false
+}
+
+func isRegexp(line string, reg string) bool {
+	matched, err := regexp.MatchString(reg, line)
+	if err != nil {
+		panic(err)
+	}
+
+	return matched
 }
 
 func getBlockName(line string) string {
