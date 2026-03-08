@@ -46,6 +46,7 @@ func main() {
 	}
 
 	result := mergeDirs(projects...)
+	result.Name = opts.ProjectName
 
 	err = createFileSystem(result, "/tmp/some")
 	if err != nil {
@@ -70,13 +71,13 @@ func getOpts() (domain.SelectedOpts, error) {
 	hahOpts := huh.NewMultiSelect[string]().
 		Options(
 			huh.NewOption("gRPC server", "grpc_server"),
-			huh.NewOption("gRPC client", "grpc_client"),
-			huh.NewOption("REST server", "web_server"),
-			huh.NewOption("REST client", "web_client"),
-			huh.NewOption("Kafka consumer", "kafka_consumer"),
-			huh.NewOption("Kafka producer", "kafka_producer"),
-			huh.NewOption("Redis", "redis"),
-			huh.NewOption("PostgreSQL", "postgres"),
+			//huh.NewOption("gRPC client", "grpc_client"),
+			huh.NewOption("REST server", "rest_server"),
+			//huh.NewOption("REST client", "web_client"),
+			//huh.NewOption("Kafka consumer", "kafka_consumer"),
+			//huh.NewOption("Kafka producer", "kafka_producer"),
+			//huh.NewOption("Redis", "redis"),
+			//huh.NewOption("PostgreSQL", "postgres"),
 		).
 		Title("Microservice options").
 		Value(&opts.Options)
