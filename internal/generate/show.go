@@ -1,16 +1,18 @@
-package vfs
+package generate
 
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
-func showDir(proj Directory) {
+func showDir(proj vfs.Directory) {
 	showFiles(proj.Files, 0)
 	showDirs(proj.Dirs, 0)
 }
 
-func showFiles(files []File, ident int) {
+func showFiles(files []vfs.File, ident int) {
 	for _, file := range files {
 		fmt.Printf("%s-----FILE-----\n", tabs(ident))
 		fmt.Printf("%sFile name: %#v\n", tabs(ident), file.Name)
@@ -18,7 +20,7 @@ func showFiles(files []File, ident int) {
 	}
 }
 
-func showBlocks(blocks []Block, ident int) {
+func showBlocks(blocks []vfs.Block, ident int) {
 	for key, block := range blocks {
 		fmt.Printf("%s-----BLOCK-----\n", tabs(ident))
 		fmt.Printf("%sBlock name: %#v\n", tabs(ident), key)
@@ -27,7 +29,7 @@ func showBlocks(blocks []Block, ident int) {
 	}
 }
 
-func showDirs(dirs []Directory, ident int) {
+func showDirs(dirs []vfs.Directory, ident int) {
 	for _, dir := range dirs {
 		fmt.Printf("%s-----DIR-----\n", tabs(ident))
 		fmt.Printf("%sDirectory name: %#v\n", tabs(ident), dir.Name)
@@ -40,13 +42,13 @@ func tabs(n int) string {
 	return string(bytes.Repeat([]byte("\t"), n))
 }
 
-func blockTypeName(t BlockType) string {
+func blockTypeName(t vfs.BlockType) string {
 	switch t {
-	case BlockTypeSingle:
+	case vfs.BlockTypeSingle:
 		return "single"
-	case BlockTypeAdd:
+	case vfs.BlockTypeAdd:
 		return "add"
-	case BlockTypeMerge:
+	case vfs.BlockTypeMerge:
 		return "merge"
 	default:
 		return "unknown"

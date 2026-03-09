@@ -1,16 +1,16 @@
-package vfs
+package generate
 
 import (
 	"bufio"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
-var Debug = false
-
-func GetDir(path string) (*Directory, error) {
-	dir := Directory{
+func GetDir(path string) (*vfs.Directory, error) {
+	dir := vfs.Directory{
 		Name: filepath.Base(path),
 	}
 
@@ -58,19 +58,19 @@ func GetDir(path string) (*Directory, error) {
 	return &dir, nil
 }
 
-func getFile(path string) (*File, error) {
+func getFile(path string) (*vfs.File, error) {
 	blocks, err := getBlocks(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return &File{
+	return &vfs.File{
 		Name:   filepath.Base(path),
 		Blocks: blocks,
 	}, nil
 }
 
-func getBlocks(path string) ([]Block, error) {
+func getBlocks(path string) ([]vfs.Block, error) {
 	finename := filepath.Base(path)
 	ext := filepath.Ext(finename)
 
@@ -80,11 +80,11 @@ func getBlocks(path string) ([]Block, error) {
 	}
 	defer f.Close()
 
-	var blocks []Block
+	var blocks []vfs.Block
 
 	var inBlock bool
 	var blockName string
-	var blockType BlockType
+	var blockType vfs.BlockType
 	var buf []string
 	var wholeFile []string
 
@@ -99,7 +99,7 @@ func getBlocks(path string) ([]Block, error) {
 			// старт нового блока это неявный конец предыдущего
 			if inBlock {
 				debug("# Add prev block %q\n", blockName)
-				blocks = append(blocks, Block{
+				blocks = append(blocks, vfs.Block{
 					Name: blockName,
 					Type: blockType,
 					Data: buf,
@@ -121,7 +121,7 @@ func getBlocks(path string) ([]Block, error) {
 		if isEndBlock(finename, ext, line) && inBlock {
 			debug("# End block found\n")
 
-			blocks = append(blocks, Block{
+			blocks = append(blocks, vfs.Block{
 				Name: blockName,
 				Type: blockType,
 				Data: buf,
@@ -142,7 +142,7 @@ func getBlocks(path string) ([]Block, error) {
 	if inBlock {
 		debug("# EOF. Add last block\n")
 
-		blocks = append(blocks, Block{
+		blocks = append(blocks, vfs.Block{
 			Name: blockName,
 			Type: blockType,
 			Data: buf,
@@ -152,9 +152,9 @@ func getBlocks(path string) ([]Block, error) {
 	// file with no blocks means single block with all file content
 	if len(blocks) == 0 {
 		debug("No blocks. Add all: %s\n", finename)
-		blocks = append(blocks, Block{
+		blocks = append(blocks, vfs.Block{
 			Name: "noblocks",
-			Type: BlockTypeSingle,
+			Type: vfs.BlockTypeSingle,
 			Data: wholeFile,
 		})
 	}
@@ -248,7 +248,7 @@ func getBlockName(line string) string {
 	panic("No block name in line")
 }
 
-func getBlockType(line string) BlockType {
+func getBlockType(line string) vfs.BlockType {
 	blockType := ""
 	for _, tok := range strings.Fields(line) {
 		if strings.HasPrefix(tok, "type:") {
@@ -258,10 +258,10 @@ func getBlockType(line string) BlockType {
 
 	switch blockType {
 	case "merge":
-		return BlockTypeMerge
+		return vfs.BlockTypeMerge
 	case "add":
-		return BlockTypeAdd
+		return vfs.BlockTypeAdd
 	default:
-		return BlockTypeSingle
+		return vfs.BlockTypeSingle
 	}
 }

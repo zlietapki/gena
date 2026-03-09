@@ -1,4 +1,4 @@
-package vfs
+package generate
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 
 	"github.com/gabriel-vasile/mimetype"
 )
+
+var Debug = false
 
 func debug(msg string, args ...interface{}) {
 	if Debug {

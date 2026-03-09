@@ -1,4 +1,4 @@
-package vfs
+package check_ymls
 
 import (
 	"fmt"
@@ -6,17 +6,18 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"github.com/zlietapki/microboiler/internal/vfs"
 	"gopkg.in/yaml.v3"
 )
 
 type fileEntry struct {
 	ymlPath string
-	file    File
+	file    vfs.File
 }
 
 type blockEntry struct {
 	ymlPath string
-	block   Block
+	block   vfs.Block
 }
 
 func CheckAllFS(path string) error {
@@ -33,7 +34,7 @@ func CheckAllFS(path string) error {
 			return err
 		}
 
-		var dir Directory
+		var dir vfs.Directory
 		if err := yaml.Unmarshal(data, &dir); err != nil {
 			return err
 		}
@@ -56,7 +57,7 @@ func CheckAllFS(path string) error {
 	return nil
 }
 
-func collectFiles(dir Directory, prefix string, ymlPath string, fileMap map[string][]fileEntry) {
+func collectFiles(dir vfs.Directory, prefix string, ymlPath string, fileMap map[string][]fileEntry) {
 	for _, f := range dir.Files {
 		fullPath := filepath.Join(prefix, f.Name)
 
@@ -105,7 +106,7 @@ func checkSingleBlocks(fullPath string, fileEntries []fileEntry) error {
 
 	for _, e := range fileEntries {
 		for _, b := range e.file.Blocks {
-			if b.Type == BlockTypeSingle {
+			if b.Type == vfs.BlockTypeSingle {
 				blockMap[b.Name] = append(blockMap[b.Name], blockEntry{
 					ymlPath: e.ymlPath,
 					block:   b,

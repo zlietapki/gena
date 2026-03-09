@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
 
 	"github.com/charmbracelet/huh"
@@ -8,18 +10,49 @@ import (
 
 type SelectedOpts struct {
 	ProjectName string
-	Options     []string
+	Options     arrayFlags
+}
+
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return fmt.Sprintf("%v", *i)
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }
 
 func getOpts() (SelectedOpts, error) {
-	var opts SelectedOpts
+	var args SelectedOpts
 
-	huhProjectName := huh.NewInput().Title("Project name").Value(&opts.ProjectName)
+	var versionFlag bool
+	flag.BoolVar(&versionFlag, "version", false, "print version")
+	var listProjects bool
+	flag.BoolVar(&listProjects, "list", false, "list available projects")
 
-	var options []huh.Option[string]
-	for name := range projectsAvailable {
-		options = append(options, huh.NewOption(name, name))
+	flag.StringVar(&args.ProjectName, "name", "", "result project name")
+	flag.Var(&args.Options, "opt", "selected options")
+	flag.Parse()
+
+	if versionFlag {
+		fmt.Println("version v0.0.1")
+		os.Exit(0)
 	}
+
+	if listProjects {
+		for name := range projectsAvailable {
+			fmt.Println(name)
+		}
+		os.Exit(0)
+	}
+
+	if args.ProjectName != "" && len(args.Options) > 0 {
+		return args, nil
+	}
+
+	huhProjectName := huh.NewInput().Title("Project name").Value(&args.ProjectName)
 
 	//huh.NewOption("gRPC server", "grpc_server"),
 	//huh.NewOption("gRPC client", "grpc_client"),
@@ -30,10 +63,15 @@ func getOpts() (SelectedOpts, error) {
 	//huh.NewOption("Redis", "redis"),
 	//huh.NewOption("PostgreSQL", "postgres"),
 
+	var options []huh.Option[string]
+	for name := range projectsAvailable {
+		options = append(options, huh.NewOption(name, name))
+	}
+
 	hahOpts := huh.NewMultiSelect[string]().
 		Options(options...).
 		Title("Microservice options").
-		Value(&opts.Options)
+		Value((*[]string)(&args.Options))
 
 	var ready bool
 	huhConfirm := huh.NewConfirm().
@@ -48,5 +86,5 @@ func getOpts() (SelectedOpts, error) {
 		os.Exit(0)
 	}
 
-	return opts, nil
+	return args, nil
 }
