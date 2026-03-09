@@ -1,36 +1,36 @@
-package main
+package vfs
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
-
-	"github.com/zlietapki/microboiler/internal/vfs"
-
-	"github.com/gabriel-vasile/mimetype"
 )
 
-func getDir(path string) (*vfs.Directory, error) {
-	dir := vfs.Directory{
+var Debug = false
+
+func GetDir(path string) (*Directory, error) {
+	dir := Directory{
 		Name: filepath.Base(path),
 	}
 
+	debug("ReadDir: %s\n", path)
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, entry := range entries {
+		debug("File: %s\n", entry.Name())
 		filePath := filepath.Join(path, entry.Name())
 
 		if entry.IsDir() {
-			if strings.HasPrefix(entry.Name(), ".") {
+			if ignoreDir(entry.Name()) {
+				debug("Ignore dir %s\n", entry.Name())
 				continue
 			}
-			sub, err := getDir(filePath)
+
+			sub, err := GetDir(filePath)
 			if err != nil {
 				return nil, err
 			}
@@ -38,11 +38,14 @@ func getDir(path string) (*vfs.Directory, error) {
 			dir.Dirs = append(dir.Dirs, *sub)
 		} else {
 			if !isTextFile(filePath) {
+				debug("Ignore binary %s\n", entry.Name())
 				continue
 			}
 			if ignoreFile(entry.Name()) {
+				debug("Ignore file %s\n", entry.Name())
 				continue
 			}
+
 			file, err := getFile(filePath)
 			if err != nil {
 				return nil, err
@@ -55,47 +58,19 @@ func getDir(path string) (*vfs.Directory, error) {
 	return &dir, nil
 }
 
-func ignoreFile(name string) bool {
-	if name == "go.sum" {
-		return true
-	}
-
-	return false
-}
-
-func isTextFile(filePath string) bool {
-	mtype, err := mimetype.DetectFile(filePath)
-	if err != nil {
-		return false
-	}
-
-	knownMimes := map[string]bool{
-		"text/plain; charset=utf-8": true,
-		"application/x-executable":  false,
-	}
-
-	if val, ok := knownMimes[mtype.String()]; ok {
-		return val
-	}
-
-	fmt.Println("Unknown MIME type:", mtype.String(), " for file:", filePath)
-	os.Exit(1)
-	return false
-}
-
-func getFile(path string) (*vfs.File, error) {
+func getFile(path string) (*File, error) {
 	blocks, err := getBlocks(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return &vfs.File{
+	return &File{
 		Name:   filepath.Base(path),
 		Blocks: blocks,
 	}, nil
 }
 
-func getBlocks(path string) ([]vfs.Block, error) {
+func getBlocks(path string) ([]Block, error) {
 	finename := filepath.Base(path)
 	ext := filepath.Ext(finename)
 
@@ -105,53 +80,81 @@ func getBlocks(path string) ([]vfs.Block, error) {
 	}
 	defer f.Close()
 
-	blocks := make([]vfs.Block, 0)
+	var blocks []Block
 
 	var inBlock bool
 	var blockName string
-	var blockType vfs.BlockType
+	var blockType BlockType
 	var buf []string
 	var wholeFile []string
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
+		//debug("# Line: %s\n", line)
 
 		wholeFile = append(wholeFile, line)
 
 		if isStartBlock(finename, ext, line) {
 			// старт нового блока это неявный конец предыдущего
 			if inBlock {
-				blocks = append(blocks, vfs.Block{
+				debug("# Add prev block %q\n", blockName)
+				blocks = append(blocks, Block{
 					Name: blockName,
 					Type: blockType,
 					Data: buf,
 				})
 			}
+
 			// start block
 			inBlock = true
 			buf = nil
 
 			blockName = getBlockName(line)
 			blockType = getBlockType(line)
-		} else if isEndBlock(finename, ext, line) && inBlock {
-			blocks = append(blocks, vfs.Block{
+
+			debug("# Block %q found\n", blockName)
+
+			continue
+		}
+
+		if isEndBlock(finename, ext, line) && inBlock {
+			debug("# End block found\n")
+
+			blocks = append(blocks, Block{
 				Name: blockName,
 				Type: blockType,
 				Data: buf,
 			})
 
 			inBlock = false
-		} else if inBlock {
-			buf = append(buf, line)
+			continue
 		}
+
+		if inBlock {
+			debug("# In block %q\n", blockName)
+
+			buf = append(buf, line)
+			continue
+		}
+	}
+
+	if inBlock {
+		debug("# EOF. Add last block\n")
+
+		blocks = append(blocks, Block{
+			Name: blockName,
+			Type: blockType,
+			Data: buf,
+		})
 	}
 
 	// file with no blocks means single block with all file content
 	if len(blocks) == 0 {
-		blocks = append(blocks, vfs.Block{
+		debug("No blocks. Add all: %s\n", finename)
+		blocks = append(blocks, Block{
 			Name: "noblocks",
-			Type: vfs.BlockTypeOverwrite,
+			Type: BlockTypeSingle,
 			Data: wholeFile,
 		})
 	}
@@ -235,15 +238,6 @@ func isEndBlock(finename, ext, line string) bool {
 	return false
 }
 
-func isRegexp(line string, reg string) bool {
-	matched, err := regexp.MatchString(reg, line)
-	if err != nil {
-		panic(err)
-	}
-
-	return matched
-}
-
 func getBlockName(line string) string {
 	for _, tok := range strings.Fields(line) {
 		if strings.HasPrefix(tok, "name:") {
@@ -254,7 +248,7 @@ func getBlockName(line string) string {
 	panic("No block name in line")
 }
 
-func getBlockType(line string) vfs.BlockType {
+func getBlockType(line string) BlockType {
 	blockType := ""
 	for _, tok := range strings.Fields(line) {
 		if strings.HasPrefix(tok, "type:") {
@@ -264,10 +258,10 @@ func getBlockType(line string) vfs.BlockType {
 
 	switch blockType {
 	case "merge":
-		return vfs.BlockTypeMerge
+		return BlockTypeMerge
 	case "add":
-		return vfs.BlockTypeAdd
+		return BlockTypeAdd
 	default:
-		return vfs.BlockTypeOverwrite
+		return BlockTypeSingle
 	}
 }

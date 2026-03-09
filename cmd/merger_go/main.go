@@ -106,7 +106,7 @@ func mergeBlocks(blocksList [][]vfs.Block, names []string, path string) []vfs.Bl
 			}
 		}
 		switch first.block.Type {
-		case vfs.BlockTypeOverwrite:
+		case vfs.BlockTypeSingle:
 			result[k] = collected[len(collected)-1].block
 		case vfs.BlockTypeAdd:
 			var data []string

@@ -698,7 +698,9 @@ dirs:
                     - '}'
                     - ""
                     - func New(repo domain.IRepository) *Usecase {
-                    - "\treturn &Usecase{repo: repo}"
+                    - "\treturn &Usecase{"
+                    - "\t\trepo: repo,"
+                    - "\t}"
                     - '}'
           dirs: []
     - name: pkg

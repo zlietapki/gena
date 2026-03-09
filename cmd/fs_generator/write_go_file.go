@@ -90,7 +90,7 @@ func blockTypeName(t vfs.BlockType) string {
 	case vfs.BlockTypeAdd:
 		return "vfs.BlockTypeAdd"
 	default:
-		return "vfs.BlockTypeOverwrite"
+		return "vfs.BlockTypeSingle"
 	}
 }
 

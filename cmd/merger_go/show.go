@@ -44,7 +44,7 @@ func tabs(n int) string {
 
 func blockTypeName(t vfs.BlockType) string {
 	switch t {
-	case vfs.BlockTypeOverwrite:
+	case vfs.BlockTypeSingle:
 		return "overwrite"
 	case vfs.BlockTypeAdd:
 		return "add"

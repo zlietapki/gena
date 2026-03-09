@@ -11,7 +11,7 @@ var FSfolder1 = vfs.Directory{
 			Name: "main",
 			Blocks: []vfs.Block{
 				{
-					Type: vfs.BlockTypeOverwrite,
+					Type: vfs.BlockTypeSingle,
 					Data: []string{"folder1 line1 should overwrite"},
 				},
 				{
@@ -19,7 +19,7 @@ var FSfolder1 = vfs.Directory{
 					Data: []string{"\tline1", "\tline2", "\tline3"},
 				},
 				{
-					Type: vfs.BlockTypeOverwrite,
+					Type: vfs.BlockTypeSingle,
 					Data: []string{"folder1 line3 should overwrite"},
 				},
 			},

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
 func main() {
@@ -14,7 +16,8 @@ func main() {
 	outputFile := os.Args[2]
 	isGo := os.Args[3]
 
-	project, err := getDir(sourceDir)
+	//vfs.Debug = true
+	project, err := vfs.GetDir(sourceDir)
 	if err != nil {
 		panic(err)
 	}
@@ -25,6 +28,10 @@ func main() {
 		if err := writeYamlFile(project, outputFile); err != nil {
 			panic(err)
 		}
+	}
+
+	if err := vfs.CheckAllFS("cmd/microboiler/"); err != nil {
+		panic(err)
 	}
 
 	fmt.Println("generated:", outputFile)

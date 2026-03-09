@@ -90,7 +90,7 @@ func block(blocks ...vfs.Block) vfs.Block {
 	result := blocks[0]
 	for _, b := range blocks[1:] {
 		switch b.Type {
-		case vfs.BlockTypeOverwrite:
+		case vfs.BlockTypeSingle:
 			result = b
 		case vfs.BlockTypeAdd:
 			//fmt.Printf("%+v\n", result.Data)

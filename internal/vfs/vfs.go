@@ -3,7 +3,7 @@ package vfs
 type BlockType int
 
 const (
-	BlockTypeOverwrite BlockType = iota
+	BlockTypeSingle BlockType = iota
 	BlockTypeAdd
 	BlockTypeMerge
 )

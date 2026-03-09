@@ -10,9 +10,10 @@ import (
 
 func createFileSystem(dir vfs.Directory, path string) error {
 	dirPath := filepath.Join(path, dir.Name)
-	if err := os.MkdirAll(dirPath, 0755); err != nil {
+	if err := os.Mkdir(dirPath, 0755); err != nil {
 		return err
 	}
+
 	for _, f := range dir.Files {
 		var sb strings.Builder
 		for _, blk := range f.Blocks {
