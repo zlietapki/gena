@@ -26,7 +26,7 @@ func CheckAllFS(path string) error {
 		return err
 	}
 
-	// полный путь к файлу -> []fvs.File inside
+	// полный путь к файлу -> []vfs.File inside
 	fileMap := map[string][]fileEntry{}
 	for _, ymlPath := range ymlPaths {
 		data, err := os.ReadFile(ymlPath)

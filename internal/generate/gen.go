@@ -2,12 +2,16 @@ package generate
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/zlietapki/microboiler/internal/vfs"
 )
+
+const defaultBlockName = "noblocks"
 
 func GetDir(path string) (*vfs.Directory, error) {
 	dir := vfs.Directory{
@@ -71,8 +75,8 @@ func getFile(path string) (*vfs.File, error) {
 }
 
 func getBlocks(path string) ([]vfs.Block, error) {
-	finename := filepath.Base(path)
-	ext := filepath.Ext(finename)
+	filename := filepath.Base(path)
+	ext := filepath.Ext(filename)
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -95,7 +99,7 @@ func getBlocks(path string) ([]vfs.Block, error) {
 
 		wholeFile = append(wholeFile, line)
 
-		if isStartBlock(finename, ext, line) {
+		if isStartBlock(filename, ext, line) {
 			// старт нового блока это неявный конец предыдущего
 			if inBlock {
 				debug("# Add prev block %q\n", blockName)
@@ -110,7 +114,10 @@ func getBlocks(path string) ([]vfs.Block, error) {
 			inBlock = true
 			buf = nil
 
-			blockName = getBlockName(line)
+			blockName, err = getBlockName(line)
+			if err != nil {
+				return nil, fmt.Errorf("%w in file %s", err, path)
+			}
 			blockType = getBlockType(line)
 
 			debug("# Block %q found\n", blockName)
@@ -118,7 +125,7 @@ func getBlocks(path string) ([]vfs.Block, error) {
 			continue
 		}
 
-		if isEndBlock(finename, ext, line) && inBlock {
+		if isEndBlock(filename, ext, line) && inBlock {
 			debug("# End block found\n")
 
 			blocks = append(blocks, vfs.Block{
@@ -151,9 +158,9 @@ func getBlocks(path string) ([]vfs.Block, error) {
 
 	// file with no blocks means single block with all file content
 	if len(blocks) == 0 {
-		debug("No blocks. Add all: %s\n", finename)
+		debug("No blocks. Add all: %s\n", filename)
 		blocks = append(blocks, vfs.Block{
-			Name: "noblocks",
+			Name: defaultBlockName,
 			Type: vfs.BlockTypeSingle,
 			Data: wholeFile,
 		})
@@ -162,7 +169,7 @@ func getBlocks(path string) ([]vfs.Block, error) {
 	return blocks, scanner.Err()
 }
 
-func isStartBlock(finename, ext, line string) bool {
+func isStartBlock(filename, ext, line string) bool {
 	line = strings.TrimSpace(line)
 
 	if ext == ".go" && isRegexp(line, `^//\s?start`) {
@@ -177,30 +184,30 @@ func isStartBlock(finename, ext, line string) bool {
 		return true
 	}
 
-	if finename == "go.mod" && isRegexp(line, `^//\s?start`) {
+	if filename == "go.mod" && isRegexp(line, `^//\s?start`) {
 		return true
 	}
 
-	if finename == ".env" && isRegexp(line, `^;\s?start`) {
+	if filename == ".env" && isRegexp(line, `^;\s?start`) {
 		return true
 	}
 
-	if finename == ".env.example" && isRegexp(line, `^;\s?start`) {
+	if filename == ".env.example" && isRegexp(line, `^;\s?start`) {
 		return true
 	}
 
-	if finename == ".gitignore" && isRegexp(line, `^#\s?start`) {
+	if filename == ".gitignore" && isRegexp(line, `^#\s?start`) {
 		return true
 	}
 
-	if finename == "Dockerfile" && isRegexp(line, `^#\s?start`) {
+	if filename == "Dockerfile" && isRegexp(line, `^#\s?start`) {
 		return true
 	}
 
 	return false
 }
 
-func isEndBlock(finename, ext, line string) bool {
+func isEndBlock(filename, ext, line string) bool {
 	line = strings.TrimSpace(line)
 
 	if ext == ".go" && isRegexp(line, `^//\s?end`) {
@@ -215,37 +222,37 @@ func isEndBlock(finename, ext, line string) bool {
 		return true
 	}
 
-	if finename == "go.mod" && isRegexp(line, `^//\s?end`) {
+	if filename == "go.mod" && isRegexp(line, `^//\s?end`) {
 		return true
 	}
 
-	if finename == ".env" && isRegexp(line, `^;\s?end`) {
+	if filename == ".env" && isRegexp(line, `^;\s?end`) {
 		return true
 	}
 
-	if finename == ".env.example" && isRegexp(line, `^;\s?end`) {
+	if filename == ".env.example" && isRegexp(line, `^;\s?end`) {
 		return true
 	}
 
-	if finename == ".gitignore" && isRegexp(line, `^#\s?end`) {
+	if filename == ".gitignore" && isRegexp(line, `^#\s?end`) {
 		return true
 	}
 
-	if finename == "Dockerfile" && isRegexp(line, `^#\s?end`) {
+	if filename == "Dockerfile" && isRegexp(line, `^#\s?end`) {
 		return true
 	}
 
 	return false
 }
 
-func getBlockName(line string) string {
+func getBlockName(line string) (string, error) {
 	for _, tok := range strings.Fields(line) {
 		if strings.HasPrefix(tok, "name:") {
-			return strings.TrimPrefix(tok, "name:")
+			return strings.TrimPrefix(tok, "name:"), nil
 		}
 	}
 
-	panic("No block name in line")
+	return "", errors.New("no block name found")
 }
 
 func getBlockType(line string) vfs.BlockType {

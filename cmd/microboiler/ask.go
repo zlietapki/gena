@@ -8,9 +8,10 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
-type SelectedOpts struct {
+type Args struct {
 	ProjectName string
 	Options     arrayFlags
+	Output      string
 }
 
 type arrayFlags []string
@@ -24,8 +25,8 @@ func (i *arrayFlags) Set(value string) error {
 	return nil
 }
 
-func getOpts(projectsAvailable map[string]string) (SelectedOpts, error) {
-	var args SelectedOpts
+func getArgs(projectsAvailable map[string]string) (Args, error) {
+	var args Args
 
 	var versionFlag bool
 	flag.BoolVar(&versionFlag, "version", false, "print version")
@@ -34,6 +35,7 @@ func getOpts(projectsAvailable map[string]string) (SelectedOpts, error) {
 
 	flag.StringVar(&args.ProjectName, "name", "", "result project name")
 	flag.Var(&args.Options, "opt", "selected options")
+	flag.StringVar(&args.Output, "output", "", "output path")
 	flag.Parse()
 
 	if versionFlag {
@@ -48,11 +50,12 @@ func getOpts(projectsAvailable map[string]string) (SelectedOpts, error) {
 		os.Exit(0)
 	}
 
-	if args.ProjectName != "" && len(args.Options) > 0 {
+	if args.ProjectName != "" && len(args.Options) > 0 && args.Output != "" {
 		return args, nil
 	}
 
 	huhProjectName := huh.NewInput().Title("Project name").Value(&args.ProjectName)
+	huhOutput := huh.NewInput().Title("Output path").Value(&args.Output)
 
 	//huh.NewOption("gRPC server", "grpc_server"),
 	//huh.NewOption("gRPC client", "grpc_client"),
@@ -68,7 +71,7 @@ func getOpts(projectsAvailable map[string]string) (SelectedOpts, error) {
 		options = append(options, huh.NewOption(name, name))
 	}
 
-	hahOpts := huh.NewMultiSelect[string]().
+	huhOpts := huh.NewMultiSelect[string]().
 		Options(options...).
 		Title("Microservice options").
 		Value((*[]string)(&args.Options))
@@ -81,7 +84,7 @@ func getOpts(projectsAvailable map[string]string) (SelectedOpts, error) {
 		Negative("No.").
 		Value(&ready)
 
-	huh.NewForm(huh.NewGroup(huhProjectName, hahOpts, huhConfirm)).Run()
+	huh.NewForm(huh.NewGroup(huhProjectName, huhOutput, huhOpts, huhConfirm)).Run()
 	if !ready {
 		os.Exit(0)
 	}

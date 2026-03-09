@@ -2,7 +2,6 @@ package generate
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 
@@ -34,7 +33,7 @@ func ignoreDir(name string) bool {
 }
 
 func isTextFile(filePath string) bool {
-	mtype, err := mimetype.DetectFile(filePath)
+	mime, err := mimetype.DetectFile(filePath)
 	if err != nil {
 		return false
 	}
@@ -44,12 +43,12 @@ func isTextFile(filePath string) bool {
 		"application/x-executable":  false,
 	}
 
-	if val, ok := knownMimes[mtype.String()]; ok {
+	if val, ok := knownMimes[mime.String()]; ok {
 		return val
 	}
 
-	fmt.Println("Unknown MIME type:", mtype.String(), " for file:", filePath)
-	os.Exit(1)
+	fmt.Println("Warning: Unknown MIME type:", mime.String(), " for file:", filePath)
+
 	return false
 }
 

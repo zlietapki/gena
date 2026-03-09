@@ -16,14 +16,14 @@ import (
 func main() {
 	var projectsAvailable = getProjectAvailable()
 
-	opts, err := getOpts(projectsAvailable)
+	args, err := getArgs(projectsAvailable)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	var selected []vfs.Directory
-	for _, opt := range opts.Options {
+	for _, opt := range args.Options {
 		yamlData, ok := projectsAvailable[opt]
 		if !ok {
 			fmt.Printf("Unknown option '%s'\n", opt)
@@ -38,10 +38,10 @@ func main() {
 		selected = append(selected, proj)
 	}
 
-	result := merge.Dirs(selected...)
-	result.Name = opts.ProjectName
+	result := merge.MergeDirs(selected...)
+	result.Name = args.ProjectName
 
-	err = createFileSystem(result, "/tmp/some")
+	err = createFileSystem(result, args.Output)
 	if err != nil {
 		fmt.Printf("Error on write project: %v\n", err)
 		if os.IsExist(err) {
@@ -50,7 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	resultFolder := filepath.Join("/tmp/some", opts.ProjectName)
+	resultFolder := filepath.Join(args.Output, args.ProjectName)
 	fmt.Printf("Project boilerplate generated %s\n", resultFolder)
 
 	fmt.Printf("Running 'go mod tidy'\n")

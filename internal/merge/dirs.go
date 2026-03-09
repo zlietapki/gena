@@ -4,115 +4,126 @@ import (
 	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
-func Dirs(dirs ...vfs.Directory) vfs.Directory {
+func MergeDirs(dirs ...vfs.Directory) vfs.Directory {
 	if len(dirs) == 0 {
 		return vfs.Directory{}
 	}
+
 	result := dirs[0]
 	for _, d := range dirs[1:] {
 		result = vfs.Directory{
 			Name:  result.Name,
-			Files: fileSlices(result.Files, d.Files),
-			Dirs:  dirSlices(result.Dirs, d.Dirs),
+			Dirs:  addDirs(result.Dirs, d.Dirs),
+			Files: addFiles(result.Files, d.Files),
 		}
 	}
 	return result
 }
 
-func fileSlices(slices ...[]vfs.File) []vfs.File {
-	index := map[string]vfs.File{}
-	var order []string
-	for _, files := range slices {
-		for _, f := range files {
-			if existing, ok := index[f.Name]; ok {
-				index[f.Name] = vfs.File{
-					Name:   f.Name,
-					Blocks: blockSlices(existing.Blocks, f.Blocks),
-				}
-			} else {
-				order = append(order, f.Name)
-				index[f.Name] = f
-			}
+func addDirs(dirsA []vfs.Directory, dirsB []vfs.Directory) []vfs.Directory {
+	dirByName := map[string]vfs.Directory{}
+	var orderedNames []string
+
+	for _, dirA := range dirsA {
+		orderedNames = append(orderedNames, dirA.Name)
+		dirByName[dirA.Name] = dirA
+	}
+
+	for _, dirB := range dirsB {
+		if dirA, ok := dirByName[dirB.Name]; ok {
+			dirByName[dirB.Name] = MergeDirs(dirA, dirB)
+		} else {
+			orderedNames = append(orderedNames, dirB.Name)
+			dirByName[dirB.Name] = dirB
 		}
 	}
-	result := make([]vfs.File, 0, len(order))
-	for _, name := range order {
-		result = append(result, index[name])
+
+	result := make([]vfs.Directory, 0, len(orderedNames))
+
+	for _, name := range orderedNames {
+		result = append(result, dirByName[name])
 	}
+
 	return result
 }
 
-func dirSlices(slices ...[]vfs.Directory) []vfs.Directory {
-	index := map[string]vfs.Directory{}
-	var order []string
-	for _, dirs := range slices {
-		for _, d := range dirs {
-			if existing, ok := index[d.Name]; ok {
-				index[d.Name] = Dirs(existing, d)
-			} else {
-				order = append(order, d.Name)
-				index[d.Name] = d
+func addFiles(filesA, filesB []vfs.File) []vfs.File {
+	fileByName := map[string]vfs.File{}
+	var orderedNames []string
+
+	for _, fileA := range filesA {
+		orderedNames = append(orderedNames, fileA.Name)
+		fileByName[fileA.Name] = fileA
+	}
+
+	for _, fileB := range filesB {
+		if fileA, ok := fileByName[fileB.Name]; ok {
+			fileByName[fileB.Name] = vfs.File{
+				Name:   fileB.Name,
+				Blocks: addBlocks(fileA.Blocks, fileB.Blocks),
 			}
+		} else {
+			orderedNames = append(orderedNames, fileB.Name)
+			fileByName[fileB.Name] = fileB
 		}
 	}
-	result := make([]vfs.Directory, 0, len(order))
-	for _, name := range order {
-		result = append(result, index[name])
+
+	result := make([]vfs.File, 0, len(orderedNames))
+
+	for _, name := range orderedNames {
+		result = append(result, fileByName[name])
 	}
+
 	return result
 }
 
-func blockSlices(slices ...[]vfs.Block) []vfs.Block {
-	index := map[string]vfs.Block{}
-	var order []string
-	for _, blocks := range slices {
-		for _, blk := range blocks {
-			if existing, ok := index[blk.Name]; ok {
-				index[blk.Name] = block(existing, blk)
-			} else {
-				order = append(order, blk.Name)
-				index[blk.Name] = blk
-			}
+func addBlocks(blocksA, blocksB []vfs.Block) []vfs.Block {
+	blockByName := map[string]vfs.Block{}
+	var orderedNames []string
+
+	for _, blockA := range blocksA {
+		orderedNames = append(orderedNames, blockA.Name)
+		blockByName[blockA.Name] = blockA
+	}
+
+	for _, blockB := range blocksB {
+		if blockA, ok := blockByName[blockB.Name]; ok {
+			blockByName[blockB.Name] = mergeBlocks(blockA, blockB)
+		} else {
+			orderedNames = append(orderedNames, blockB.Name)
+			blockByName[blockB.Name] = blockB
 		}
 	}
-	result := make([]vfs.Block, 0, len(order))
-	for _, name := range order {
-		result = append(result, index[name])
+
+	result := make([]vfs.Block, 0, len(orderedNames))
+
+	for _, name := range orderedNames {
+		result = append(result, blockByName[name])
 	}
+
 	return result
 }
 
-func block(blocks ...vfs.Block) vfs.Block {
-	if len(blocks) == 0 {
-		return vfs.Block{}
+func mergeBlocks(a vfs.Block, b vfs.Block) vfs.Block {
+	if a.Type == vfs.BlockTypeSingle {
+		return a
 	}
 
-	result := blocks[0]
-	for _, b := range blocks[1:] {
-		switch b.Type {
-		case vfs.BlockTypeSingle:
-			result = b
-		case vfs.BlockTypeAdd:
-			//fmt.Printf("%+v\n", result.Data)
-			//fmt.Printf("%+v\n", b.Data)
-			//panic(123)
-			result = vfs.Block{
-				Name: result.Name,
-				Type: result.Type,
-				Data: append(result.Data, b.Data...),
-			}
-		case vfs.BlockTypeMerge:
-			data := lines(result.Data, b.Data)
-
-			result = vfs.Block{
-				Name: result.Name,
-				Type: result.Type,
-				Data: data,
-			}
-		default:
-			result = b
+	if a.Type == vfs.BlockTypeAdd {
+		return vfs.Block{
+			Name: a.Name,
+			Type: a.Type,
+			Data: append(a.Data, b.Data...),
 		}
 	}
 
-	return result
+	if a.Type == vfs.BlockTypeMerge {
+		return vfs.Block{
+			Name: a.Name,
+			Type: a.Type,
+			Data: mergeLines(a.Data, b.Data),
+		}
+	}
+
+	return a
 }
