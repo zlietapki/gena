@@ -24,7 +24,7 @@ tasks:
       - update
     cmds:
       - rm -rf /tmp/some/check
-      - go run ./cmd/microboiler/ -name check -opt grpc_server -opt rest_server
+      - go run ./cmd/microboiler/ -name check -opt microboiler_grpc_server -opt microboiler_rest_server
 
   lint:
     desc: Run linter

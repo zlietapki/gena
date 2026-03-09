@@ -24,7 +24,7 @@ func (i *arrayFlags) Set(value string) error {
 	return nil
 }
 
-func getOpts() (SelectedOpts, error) {
+func getOpts(projectsAvailable map[string]string) (SelectedOpts, error) {
 	var args SelectedOpts
 
 	var versionFlag bool

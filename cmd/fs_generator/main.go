@@ -14,7 +14,7 @@ import (
 func main() {
 	args := getArgs()
 
-	outputFile := filepath.Join("cmd/microboiler", args.NameProject+".yml")
+	outputFile := filepath.Join("pkg/projects", args.NameProject+".yml")
 
 	//vfs.Debug = true
 	project, err := generate.GetDir(args.Src)
@@ -26,7 +26,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := check_ymls.CheckAllFS("cmd/microboiler/"); err != nil {
+	if err := check_ymls.CheckAllFS("pkg/projects/"); err != nil {
 		panic(err)
 	}
 

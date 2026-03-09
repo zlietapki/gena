@@ -1,36 +1,28 @@
 package main
 
 import (
-	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/zlietapki/microboiler/internal/merge"
 	"github.com/zlietapki/microboiler/internal/vfs"
+	"github.com/zlietapki/microboiler/pkg/projects"
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed microboiler_grpc_server.yml
-var microboilerGrpcServer string
-
-//go:embed microboiler_rest_server.yml
-var microboilerRestServer string
-
-var projectsAvailable = map[string]string{
-	"grpc_server": microboilerGrpcServer,
-	"rest_server": microboilerRestServer,
-}
-
 func main() {
-	opts, err := getOpts()
+	var projectsAvailable = getProjectAvailable()
+
+	opts, err := getOpts(projectsAvailable)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	var projects []vfs.Directory
+	var selected []vfs.Directory
 	for _, opt := range opts.Options {
 		yamlData, ok := projectsAvailable[opt]
 		if !ok {
@@ -43,10 +35,10 @@ func main() {
 			panic(err)
 		}
 
-		projects = append(projects, proj)
+		selected = append(selected, proj)
 	}
 
-	result := merge.Dirs(projects...)
+	result := merge.Dirs(selected...)
 	result.Name = opts.ProjectName
 
 	err = createFileSystem(result, "/tmp/some")
@@ -69,4 +61,15 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("Done\n")
+}
+
+func getProjectAvailable() map[string]string {
+	m := map[string]string{}
+	entries, _ := projects.YmlFiles.ReadDir(".")
+	for _, e := range entries {
+		data, _ := projects.YmlFiles.ReadFile(e.Name())
+		key := strings.TrimSuffix(e.Name(), ".yml")
+		m[key] = string(data)
+	}
+	return m
 }
