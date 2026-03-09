@@ -27,10 +27,7 @@ Debug
 -----
 
 ```shell
-rm -r /tmp/some/check
-
-task update
-go run ./cmd/microboiler/ --skip-options-select
+task check
 
 cd /tmp/some/check
 go mod tidy

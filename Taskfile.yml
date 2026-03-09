@@ -23,7 +23,8 @@ tasks:
     deps:
       - update
     cmds:
-      - go run ./cmd/microboiler/ -skip-options-select
+      - rm -rf /tmp/some/check
+      - go run ./cmd/microboiler/ -name check -opt grpc_server -opt rest_server
 
   lint:
     desc: Run linter

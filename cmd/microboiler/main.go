@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/zlietapki/microboiler/internal/merge"
 	"github.com/zlietapki/microboiler/internal/vfs"
@@ -22,11 +24,7 @@ var projectsAvailable = map[string]string{
 }
 
 func main() {
-
-	var opts SelectedOpts
-	var err error
-
-	opts, err = getOpts()
+	opts, err := getOpts()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -60,12 +58,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Project boilerplate generated /tmp/some/%s\n", opts.ProjectName)
+	resultFolder := filepath.Join("/tmp/some", opts.ProjectName)
+	fmt.Printf("Project boilerplate generated %s\n", resultFolder)
 
-	//out, err := yaml.Marshal(result)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//fmt.Print(string(out))
+	fmt.Printf("Running 'go mod tidy'\n")
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = resultFolder
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fmt.Printf("go mod tidy: %s\n", out)
+		os.Exit(1)
+	}
+	fmt.Printf("Done\n")
 }
