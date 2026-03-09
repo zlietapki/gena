@@ -25,6 +25,7 @@ func CheckAllFS(path string) error {
 		return err
 	}
 
+	// полный путь к файлу -> []fvs.File inside
 	fileMap := map[string][]fileEntry{}
 	for _, ymlPath := range ymlPaths {
 		data, err := os.ReadFile(ymlPath)
@@ -47,6 +48,9 @@ func CheckAllFS(path string) error {
 		if err := checkSingleBlocks(fullPath, entries); err != nil {
 			return err
 		}
+		if err := checkBlockTypes(fullPath, entries); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -67,13 +71,45 @@ func collectFiles(dir Directory, prefix string, ymlPath string, fileMap map[stri
 	}
 }
 
+func checkBlockTypes(fullPath string, fileEntries []fileEntry) error {
+	blockMap := map[string][]blockEntry{}
+
+	for _, e := range fileEntries {
+		for _, b := range e.file.Blocks {
+			blockMap[b.Name] = append(blockMap[b.Name], blockEntry{
+				ymlPath: e.ymlPath,
+				block:   b,
+			})
+		}
+	}
+
+	for blockName, blockEntries := range blockMap {
+		if len(blockEntries) < 2 {
+			continue
+		}
+
+		ref := blockEntries[0].block.Type
+		for _, be := range blockEntries[1:] {
+			if ref != be.block.Type {
+				return fmt.Errorf("conflict: file=%q block=%q block type mismatch: %s vs %s",
+					fullPath, blockName, blockEntries[0].ymlPath, be.ymlPath)
+			}
+		}
+	}
+
+	return nil
+}
+
 func checkSingleBlocks(fullPath string, fileEntries []fileEntry) error {
 	blockMap := map[string][]blockEntry{}
 
 	for _, e := range fileEntries {
 		for _, b := range e.file.Blocks {
 			if b.Type == BlockTypeSingle {
-				blockMap[b.Name] = append(blockMap[b.Name], blockEntry{e.ymlPath, b})
+				blockMap[b.Name] = append(blockMap[b.Name], blockEntry{
+					ymlPath: e.ymlPath,
+					block:   b,
+				})
 			}
 		}
 	}

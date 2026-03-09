@@ -22,7 +22,7 @@ files:
             - ENV=local
     - name: .gitignore
       blocks:
-        - name: "1"
+        - name: common
           type: 2
           data:
             - .idea/
@@ -233,7 +233,6 @@ dirs:
                   data:
                     - "\t}"
                     - '}'
-                    - ""
           dirs: []
     - name: internal
       files: []
@@ -286,7 +285,6 @@ dirs:
                     - ""
                     - "\treturn fallback"
                     - '}'
-                    - ""
           dirs: []
         - name: domain
           files:
@@ -318,7 +316,6 @@ dirs:
                   type: 0
                   data:
                     - '}'
-                    - ""
             - name: usecase.go
               blocks:
                 - name: top
@@ -343,7 +340,6 @@ dirs:
                   type: 0
                   data:
                     - '}'
-                    - ""
           dirs: []
         - name: grpc_handler
           files:
@@ -425,7 +421,6 @@ dirs:
                   data:
                     - "\t}"
                     - '}'
-                    - ""
           dirs: []
         - name: usecase
           files:

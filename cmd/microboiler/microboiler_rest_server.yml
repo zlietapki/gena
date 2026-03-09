@@ -22,8 +22,8 @@ files:
             - ENV=local
     - name: .gitignore
       blocks:
-        - name: all
-          type: 0
+        - name: common
+          type: 2
           data:
             - .idea/
             - .claude/
@@ -191,7 +191,7 @@ dirs:
       files:
         - name: oapi-codegen.yml
           blocks:
-            - name: all
+            - name: noblocks
               type: 0
               data:
                 - 'package: rest_models'
@@ -200,7 +200,7 @@ dirs:
                 - 'output: internal/rest_models/models.gen.go'
         - name: swagger.yml
           blocks:
-            - name: all
+            - name: noblocks
               type: 0
               data:
                 - 'openapi: 3.0.3'
@@ -332,7 +332,6 @@ dirs:
                   data:
                     - "\t}"
                     - '}'
-                    - ""
           dirs: []
     - name: internal
       files: []
@@ -385,7 +384,6 @@ dirs:
                     - ""
                     - "\treturn fallback"
                     - '}'
-                    - ""
           dirs: []
         - name: domain
           files:
@@ -431,7 +429,6 @@ dirs:
                   type: 0
                   data:
                     - '}'
-                    - ""
             - name: usecase.go
               blocks:
                 - name: top
@@ -455,7 +452,6 @@ dirs:
                   type: 0
                   data:
                     - '}'
-                    - ""
           dirs: []
         - name: repository
           files:
@@ -526,7 +522,6 @@ dirs:
                   data:
                     - "\t}"
                     - '}'
-                    - ""
           dirs: []
         - name: rest_handler
           files:
