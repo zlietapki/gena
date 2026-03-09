@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error on write project: %v\n", err)
 		if os.IsExist(err) {
-			fmt.Printf("Distanation folder already exists\n")
+			fmt.Printf("Destination folder already exists\n")
 		}
 		os.Exit(1)
 	}
