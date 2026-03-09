@@ -21,6 +21,10 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	if !pathExistsAndDir(args.Output) {
+		fmt.Printf("Output path does not exist: %s\n", args.Output)
+		os.Exit(1)
+	}
 
 	var selected []vfs.Directory
 	for _, opt := range args.Options {

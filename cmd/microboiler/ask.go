@@ -1,11 +1,12 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/huh"
+	"charm.land/huh/v2"
 )
 
 type Args struct {
@@ -54,9 +55,6 @@ func getArgs(projectsAvailable map[string]string) (Args, error) {
 		return args, nil
 	}
 
-	huhProjectName := huh.NewInput().Title("Project name").Value(&args.ProjectName)
-	huhOutput := huh.NewInput().Title("Output path").Value(&args.Output)
-
 	//huh.NewOption("gRPC server", "grpc_server"),
 	//huh.NewOption("gRPC client", "grpc_client"),
 	//	huh.NewOption("REST server", "rest_server"),
@@ -71,23 +69,48 @@ func getArgs(projectsAvailable map[string]string) (Args, error) {
 		options = append(options, huh.NewOption(name, name))
 	}
 
-	huhOpts := huh.NewMultiSelect[string]().
-		Options(options...).
-		Title("Microservice options").
-		Value((*[]string)(&args.Options))
+	huh.NewForm(
+		huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Options(options...).
+				Height(len(options)+1).
+				Title("Microservice options").
+				Value((*[]string)(&args.Options)).
+				Validate(func(s []string) error {
+					if len(s) == 0 {
+						return errors.New("select at least one option")
+					}
+					return nil
+				}),
+			huh.NewInput().Title("Project name").Value(&args.ProjectName).
+				Validate(func(s string) error {
+					if s == "" {
+						return errors.New("required")
+					}
+					return nil
+				}),
+			huh.NewInput().Title("Output path").Value(&args.Output).
+				Validate(func(s string) error {
+					if s == "" {
+						return errors.New("required")
+					}
 
-	var ready bool
-	huhConfirm := huh.NewConfirm().
-		Title("Are you sure? ").
-		Description("Ready to build").
-		Affirmative("Yes!").
-		Negative("No.").
-		Value(&ready)
+					if !pathExistsAndDir(s) {
+						return errors.New("path does not exist")
+					}
 
-	huh.NewForm(huh.NewGroup(huhProjectName, huhOutput, huhOpts, huhConfirm)).Run()
-	if !ready {
-		os.Exit(0)
-	}
+					return nil
+				}),
+		)).Run()
 
 	return args, nil
+}
+
+func pathExistsAndDir(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	return info.IsDir()
 }
