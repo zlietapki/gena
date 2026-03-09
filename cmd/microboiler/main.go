@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/zlietapki/microboiler/internal/domain"
 	"github.com/zlietapki/microboiler/internal/merge"
 	"github.com/zlietapki/microboiler/internal/vfs"
 	"gopkg.in/yaml.v3"
@@ -18,7 +17,7 @@ var microboilerGrpcServer string
 //go:embed microboiler_rest_server.yml
 var microboilerRestServer string
 
-var optToYaml = map[string]string{
+var projectsAvailable = map[string]string{
 	"grpc_server": microboilerGrpcServer,
 	"rest_server": microboilerRestServer,
 }
@@ -34,10 +33,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	var opts domain.SelectedOpts
+	var opts SelectedOpts
 	var err error
 	if *skipOptionsSelect {
-		opts = domain.SelectedOpts{
+		opts = SelectedOpts{
 			ProjectName: "check",
 			Options:     []string{"grpc_server", "rest_server"},
 		}
@@ -51,7 +50,7 @@ func main() {
 
 	var projects []vfs.Directory
 	for _, opt := range opts.Options {
-		yamlData, ok := optToYaml[opt]
+		yamlData, ok := projectsAvailable[opt]
 		if !ok {
 			fmt.Printf("Unknown option '%s'\n", opt)
 			os.Exit(1)

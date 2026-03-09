@@ -4,25 +4,34 @@ import (
 	"os"
 
 	"github.com/charmbracelet/huh"
-	"github.com/zlietapki/microboiler/internal/domain"
 )
 
-func getOpts() (domain.SelectedOpts, error) {
-	opts := domain.SelectedOpts{}
+type SelectedOpts struct {
+	ProjectName string
+	Options     []string
+}
+
+func getOpts() (SelectedOpts, error) {
+	var opts SelectedOpts
 
 	huhProjectName := huh.NewInput().Title("Project name").Value(&opts.ProjectName)
 
+	var options []huh.Option[string]
+	for name := range projectsAvailable {
+		options = append(options, huh.NewOption(name, name))
+	}
+
+	//huh.NewOption("gRPC server", "grpc_server"),
+	//huh.NewOption("gRPC client", "grpc_client"),
+	//	huh.NewOption("REST server", "rest_server"),
+	//huh.NewOption("REST client", "web_client"),
+	//huh.NewOption("Kafka consumer", "kafka_consumer"),
+	//huh.NewOption("Kafka producer", "kafka_producer"),
+	//huh.NewOption("Redis", "redis"),
+	//huh.NewOption("PostgreSQL", "postgres"),
+
 	hahOpts := huh.NewMultiSelect[string]().
-		Options(
-			huh.NewOption("gRPC server", "grpc_server"),
-			//huh.NewOption("gRPC client", "grpc_client"),
-			huh.NewOption("REST server", "rest_server"),
-			//huh.NewOption("REST client", "web_client"),
-			//huh.NewOption("Kafka consumer", "kafka_consumer"),
-			//huh.NewOption("Kafka producer", "kafka_producer"),
-			//huh.NewOption("Redis", "redis"),
-			//huh.NewOption("PostgreSQL", "postgres"),
-		).
+		Options(options...).
 		Title("Microservice options").
 		Value(&opts.Options)
 
