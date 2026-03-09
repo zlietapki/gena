@@ -62,15 +62,24 @@ files:
             - CMD ["./server"]
     - name: README.md
       blocks:
-        - name: some)
+        - name: common
           type: 0
           data:
+            - microboiler
+            - ===========
             - ""
-            - '# microboiler_grpc_server'
+            - Project boilerplate
+            - ""
+        - name: project
+          type: 1
+          data:
+            - ""
+            - grpc_server
+            - '-----------'
             - ""
             - Boilerplate gRPC microservice template. Clean architecture, standard Go project layout.
             - ""
-            - '## Structure'
+            - '### Structure'
             - ""
             - '```'
             - cmd/server/          — entrypoint
@@ -82,36 +91,50 @@ files:
             - '  grpc_handler/      — gRPC transport handlers'
             - pkg/
             - '  grpcserver/        — gRPC server + interceptors'
-            - api/                 — proto/contract references
             - '```'
             - ""
-            - '## Run'
+            - '### Run'
             - ""
             - '```bash'
-            - cp .env.example .env
             - task run
+            - '# or'
+            - docker compose up
             - '```'
             - ""
-            - '## Build'
+            - '### Build'
             - ""
             - '```bash'
             - task build
             - '# binary: bin/server'
             - '```'
             - ""
-            - '## Test / Lint'
+            - '### Test / Lint'
             - ""
             - '```bash'
             - task test
             - task lint
             - '```'
             - ""
-            - '## Health check'
+            - '### Health check'
             - ""
             - '```bash'
-            - grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
+            - grpcurl -plaintext localhost:8888 grpc.health.v1.Health/Check
             - '```'
             - ""
+            - '### Example requests'
+            - ""
+            - '```shell'
+            - grpcurl -plaintext localhost:8888 list
+            - grpcurl -plaintext localhost:8888 list api.proto.Example
+            - grpcurl -plaintext localhost:8888 describe api.proto.Example.Hello
+            - grpcurl -plaintext localhost:8888 describe .api.proto.HelloReq
+            - ""
+            - grpcurl -plaintext -d @ localhost:8888 api.proto.Example.Hello <<EOM
+            - '{'
+            - '  "name": "ZlieTapki"'
+            - '}'
+            - EOM
+            - '```'
     - name: Taskfile.yml
       blocks:
         - name: common
@@ -144,6 +167,18 @@ files:
             - '    cmds:'
             - '      - go fmt ./...'
             - '      - go vet ./...'
+    - name: docker-compose.yml
+      blocks:
+        - name: noblocks
+          type: 0
+          data:
+            - 'services:'
+            - '  server:'
+            - '    build: .'
+            - '    ports:'
+            - '      - "8888:8888"'
+            - '    env_file:'
+            - '      - .env'
     - name: go.mod
       blocks:
         - name: gomod
@@ -379,7 +414,14 @@ dirs:
                     - )
                     - ""
                     - func (h *Handler) Hello(ctx context.Context, req *pb.HelloReq) (*pb.HelloRes, error) {
-                    - "\treturn &pb.HelloRes{}, nil"
+                    - "\tresp, err := h.uc.Hello(ctx, req.Name)"
+                    - "\tif err != nil {"
+                    - "\t\treturn nil, err"
+                    - "\t}"
+                    - ""
+                    - "\treturn &pb.HelloRes{"
+                    - "\t\tHello: resp,"
+                    - "\t}, nil"
                     - '}'
           dirs: []
         - name: repository
@@ -437,7 +479,7 @@ dirs:
                     - )
                     - ""
                     - func (u Usecase) Hello(ctx context.Context, name string) (string, error) {
-                    - "\tres := fmt.Sprintf(\"Hello: %s\\n\", name)"
+                    - "\tres := fmt.Sprintf(\"Hello: %s\", name)"
                     - ""
                     - "\treturn res, nil"
                     - '}'

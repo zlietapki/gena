@@ -16,7 +16,6 @@ func main() {
 
 	outputFile := filepath.Join("pkg/projects", args.NameProject+".yml")
 
-	//vfs.Debug = true
 	project, err := generate.GetDir(args.Src)
 	if err != nil {
 		panic(err)

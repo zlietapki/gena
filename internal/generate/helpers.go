@@ -8,8 +8,6 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 )
 
-var Debug = false
-
 func debug(msg string, args ...interface{}) {
 	if Debug {
 		fmt.Printf("DEBUG "+msg, args...)

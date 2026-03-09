@@ -11,6 +11,8 @@ import (
 	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
+var Debug = false
+
 const defaultBlockName = "noblocks"
 
 func GetDir(path string) (*vfs.Directory, error) {
@@ -120,7 +122,7 @@ func getBlocks(path string) ([]vfs.Block, error) {
 			}
 			blockType = getBlockType(line)
 
-			debug("# Block %q found\n", blockName)
+			debug("# Block found name:%q type:%q\n", blockName, blockType)
 
 			continue
 		}
@@ -188,11 +190,11 @@ func isStartBlock(filename, ext, line string) bool {
 		return true
 	}
 
-	if filename == ".env" && isRegexp(line, `^;\s?start`) {
+	if filename == ".env" && isRegexp(line, `^#\s?start`) {
 		return true
 	}
 
-	if filename == ".env.example" && isRegexp(line, `^;\s?start`) {
+	if filename == ".env.example" && isRegexp(line, `^#\s?start`) {
 		return true
 	}
 
@@ -226,11 +228,11 @@ func isEndBlock(filename, ext, line string) bool {
 		return true
 	}
 
-	if filename == ".env" && isRegexp(line, `^;\s?end`) {
+	if filename == ".env" && isRegexp(line, `^#\s?end`) {
 		return true
 	}
 
-	if filename == ".env.example" && isRegexp(line, `^;\s?end`) {
+	if filename == ".env.example" && isRegexp(line, `^#\s?end`) {
 		return true
 	}
 
@@ -246,6 +248,8 @@ func isEndBlock(filename, ext, line string) bool {
 }
 
 func getBlockName(line string) (string, error) {
+	line = strings.TrimSuffix(line, ")") // for markdown comments like [//]: # (start name:common)
+
 	for _, tok := range strings.Fields(line) {
 		if strings.HasPrefix(tok, "name:") {
 			return strings.TrimPrefix(tok, "name:"), nil
@@ -256,6 +260,8 @@ func getBlockName(line string) (string, error) {
 }
 
 func getBlockType(line string) vfs.BlockType {
+	line = strings.TrimSuffix(line, ")") // for markdown comments like [//]: # (start name:common)
+
 	blockType := ""
 	for _, tok := range strings.Fields(line) {
 		if strings.HasPrefix(tok, "type:") {

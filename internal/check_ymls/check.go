@@ -123,7 +123,7 @@ func checkSingleBlocks(fullPath string, fileEntries []fileEntry) error {
 		ref := blockEntries[0].block.Data
 		for _, be := range blockEntries[1:] {
 			if !reflect.DeepEqual(ref, be.block.Data) {
-				return fmt.Errorf("conflict: file=%q block=%q: %s vs %s",
+				return fmt.Errorf("conflict blocks type:single with different content: file=%q block=%q: %s vs %s",
 					fullPath, blockName, blockEntries[0].ymlPath, be.ymlPath)
 			}
 		}
