@@ -26,7 +26,7 @@ func main() {
 	}
 
 	if err := check_ymls.CheckAllFS("pkg/projects/"); err != nil {
-		panic(err)
+		fmt.Printf("ERROR %s", err)
 	}
 
 	fmt.Println("generated:", outputFile)

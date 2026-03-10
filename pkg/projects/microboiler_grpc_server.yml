@@ -55,11 +55,14 @@ files:
             - WORKDIR /app
             - ""
             - COPY --from=builder /app/server .
-            - COPY .env.example .env.example
-            - ""
-            - EXPOSE 8888
+            - COPY .env .env
             - ""
             - CMD ["./server"]
+            - ""
+        - name: expose
+          type: 1
+          data:
+            - EXPOSE 8888
     - name: README.md
       blocks:
         - name: common
@@ -69,6 +72,23 @@ files:
             - ===========
             - ""
             - Project boilerplate
+            - ""
+            - Run
+            - '---'
+            - ""
+            - '```bash'
+            - task run
+            - '# or'
+            - docker compose up; docker-compose rm --force --stop --volumes
+            - '```'
+            - ""
+            - Build
+            - '-----'
+            - ""
+            - '```bash'
+            - task build
+            - '# binary: bin/server'
+            - '```'
             - ""
         - name: project
           type: 1
@@ -91,21 +111,6 @@ files:
             - '  grpc_handler/      — gRPC transport handlers'
             - pkg/
             - '  grpcserver/        — gRPC server + interceptors'
-            - '```'
-            - ""
-            - '### Run'
-            - ""
-            - '```bash'
-            - task run
-            - '# or'
-            - docker compose up
-            - '```'
-            - ""
-            - '### Build'
-            - ""
-            - '```bash'
-            - task build
-            - '# binary: bin/server'
             - '```'
             - ""
             - '### Test / Lint'
@@ -169,14 +174,20 @@ files:
             - '      - go vet ./...'
     - name: docker-compose.yml
       blocks:
-        - name: noblocks
+        - name: common
           type: 0
           data:
             - 'services:'
             - '  server:'
             - '    build: .'
             - '    ports:'
+        - name: ports
+          type: 1
+          data:
             - '      - "8888:8888"'
+        - name: post_ports
+          type: 0
+          data:
             - '    env_file:'
             - '      - .env'
     - name: go.mod

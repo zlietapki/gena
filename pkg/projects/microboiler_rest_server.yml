@@ -55,11 +55,14 @@ files:
             - WORKDIR /app
             - ""
             - COPY --from=builder /app/server .
-            - COPY .env.example .env.example
-            - ""
-            - EXPOSE 8888
+            - COPY .env .env
             - ""
             - CMD ["./server"]
+            - ""
+        - name: expose
+          type: 1
+          data:
+            - EXPOSE 8080
     - name: README.md
       blocks:
         - name: common
@@ -69,6 +72,23 @@ files:
             - ===========
             - ""
             - Project boilerplate
+            - ""
+            - Run
+            - '---'
+            - ""
+            - '```bash'
+            - task run
+            - '# or'
+            - docker compose up; docker-compose rm --force --stop --volumes
+            - '```'
+            - ""
+            - Build
+            - '-----'
+            - ""
+            - '```bash'
+            - task build
+            - '# binary: bin/server'
+            - '```'
             - ""
         - name: project
           type: 1
@@ -93,19 +113,6 @@ files:
             - '  usecase/           — business logic'
             - pkg/
             - '  httpserver/        — http server + interceptors'
-            - '```'
-            - ""
-            - '### Run'
-            - ""
-            - '```bash'
-            - task run
-            - '```'
-            - ""
-            - '### Build'
-            - ""
-            - '```bash'
-            - task build
-            - '# binary: bin/server'
             - '```'
             - ""
             - '### Test / Lint'
@@ -176,6 +183,24 @@ files:
             - '      - oapi_tools'
             - '    cmds:'
             - '      - bin/oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
+    - name: docker-compose.yml
+      blocks:
+        - name: common
+          type: 0
+          data:
+            - 'services:'
+            - '  server:'
+            - '    build: .'
+            - '    ports:'
+        - name: ports
+          type: 1
+          data:
+            - '      - "8080:8080"'
+        - name: post_ports
+          type: 0
+          data:
+            - '    env_file:'
+            - '      - .env'
     - name: go.mod
       blocks:
         - name: gomod
