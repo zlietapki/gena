@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := check_ymls.CheckAllFS("pkg/projects/"); err != nil {
+	if err := check_ymls.CheckProjects(); err != nil {
 		fmt.Printf("ERROR %s", err)
 	}
 

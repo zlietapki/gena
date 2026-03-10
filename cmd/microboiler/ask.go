@@ -26,7 +26,7 @@ func (i *arrayFlags) Set(value string) error {
 	return nil
 }
 
-func getArgs(projectsAvailable map[string]string) (Args, error) {
+func getArgs(projectNames []string) (Args, error) {
 	var args Args
 
 	var versionFlag bool
@@ -45,7 +45,7 @@ func getArgs(projectsAvailable map[string]string) (Args, error) {
 	}
 
 	if listProjects {
-		for name := range projectsAvailable {
+		for name := range projectNames {
 			fmt.Println(name)
 		}
 		os.Exit(0)
@@ -65,7 +65,7 @@ func getArgs(projectsAvailable map[string]string) (Args, error) {
 	//huh.NewOption("PostgreSQL", "postgres"),
 
 	var options []huh.Option[string]
-	for name := range projectsAvailable {
+	for _, name := range projectNames {
 		options = append(options, huh.NewOption(name, name))
 	}
 
@@ -95,7 +95,7 @@ func getArgs(projectsAvailable map[string]string) (Args, error) {
 						return errors.New("required")
 					}
 
-					if !pathExistsAndDir(s) {
+					if !pathExistsAndIsDir(s) {
 						return errors.New("path does not exist")
 					}
 
@@ -106,7 +106,7 @@ func getArgs(projectsAvailable map[string]string) (Args, error) {
 	return args, nil
 }
 
-func pathExistsAndDir(path string) bool {
+func pathExistsAndIsDir(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
 		return false

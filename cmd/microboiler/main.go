@@ -5,41 +5,30 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/zlietapki/microboiler/internal/merge"
 	"github.com/zlietapki/microboiler/internal/vfs"
 	"github.com/zlietapki/microboiler/pkg/projects"
-	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	var projectsAvailable = getProjectAvailable()
-
-	args, err := getArgs(projectsAvailable)
+	args, err := getArgs(projects.Names())
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		printError(err.Error())
 	}
-	if !pathExistsAndDir(args.Output) {
-		fmt.Printf("Output path does not exist: %s\n", args.Output)
-		os.Exit(1)
+
+	if !pathExistsAndIsDir(args.Output) {
+		printError("Output directory does not exist: %s", args.Output)
 	}
 
 	var selected []vfs.Directory
 	for _, opt := range args.Options {
-		yamlData, ok := projectsAvailable[opt]
-		if !ok {
-			fmt.Printf("Unknown option '%s'\n", opt)
-			os.Exit(1)
+		proj, err := projects.GetByName(opt)
+		if err != nil {
+			printError(err.Error())
 		}
 
-		var proj vfs.Directory
-		if err = yaml.Unmarshal([]byte(yamlData), &proj); err != nil {
-			panic(err)
-		}
-
-		selected = append(selected, proj)
+		selected = append(selected, *proj)
 	}
 
 	result := merge.MergeDirs(selected...)
@@ -47,11 +36,7 @@ func main() {
 
 	err = createFileSystem(result, args.Output)
 	if err != nil {
-		fmt.Printf("Error on write project: %v\n", err)
-		if os.IsExist(err) {
-			fmt.Printf("Destination folder already exists\n")
-		}
-		os.Exit(1)
+		printError("Error on write project: %v\n", err)
 	}
 
 	resultFolder := filepath.Join(args.Output, args.ProjectName)
@@ -61,19 +46,12 @@ func main() {
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Dir = resultFolder
 	if out, err := cmd.CombinedOutput(); err != nil {
-		fmt.Printf("go mod tidy: %s\n", out)
-		os.Exit(1)
+		printError("Error running go mod tidy: %s %v", out, err)
 	}
 	fmt.Printf("Done\n")
 }
 
-func getProjectAvailable() map[string]string {
-	m := map[string]string{}
-	entries, _ := projects.YmlFiles.ReadDir(".")
-	for _, e := range entries {
-		data, _ := projects.YmlFiles.ReadFile(e.Name())
-		key := strings.TrimSuffix(e.Name(), ".yml")
-		m[key] = string(data)
-	}
-	return m
+func printError(msg string, args ...interface{}) {
+	fmt.Printf(msg+"\n", args...)
+	os.Exit(1)
 }
