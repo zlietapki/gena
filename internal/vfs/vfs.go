@@ -9,6 +9,12 @@ import (
 
 type BlockType int
 
+const (
+	BlockTypeSingle BlockType = iota
+	BlockTypeAdd
+	BlockTypeMerge
+)
+
 type OctalMode os.FileMode
 
 func (o OctalMode) String() string {
@@ -22,11 +28,16 @@ func (o OctalMode) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
-const (
-	BlockTypeSingle BlockType = iota
-	BlockTypeAdd
-	BlockTypeMerge
-)
+func (o *OctalMode) UnmarshalYAML(value *yaml.Node) error {
+	v, err := strconv.ParseUint(value.Value, 8, 32)
+	if err != nil {
+		return err
+	}
+
+	*o = OctalMode(v)
+
+	return nil
+}
 
 type Directory struct {
 	Name  string

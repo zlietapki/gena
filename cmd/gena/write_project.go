@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -13,9 +12,6 @@ import (
 func createFileSystem(dir vfs.Directory, path string) error {
 	dirPath := filepath.Join(path, dir.Name)
 	mode := (fs.FileMode)(dir.Mode)
-	fmt.Printf("Creating directory MODE: %+v\n", dir.Mode)
-	return nil
-
 	if err := os.Mkdir(dirPath, mode); err != nil {
 		return err
 	}
