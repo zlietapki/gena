@@ -4,6 +4,23 @@ import (
 	"fmt"
 )
 
+func BlocksSameType() error {
+	fileMap, err := getFileMap()
+	if err != nil {
+		return err
+	}
+
+	for path, fileEntries := range fileMap {
+		if len(fileEntries) < 2 {
+			continue
+		}
+
+		checkBlockSameTypes(path, fileEntries)
+	}
+
+	return nil
+}
+
 func checkBlockSameTypes(path string, fileEntries []fileEntry) bool {
 	blockMap := map[string][]blockEntry{}
 

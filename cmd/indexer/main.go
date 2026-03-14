@@ -37,6 +37,10 @@ func main() {
 		fmt.Printf("ERROR %s", err)
 	}
 
+	if err := indexchecker.SameMode(); err != nil {
+		fmt.Printf("ERROR %s", err)
+	}
+
 	fmt.Println("generated:", outputFile)
 }
 

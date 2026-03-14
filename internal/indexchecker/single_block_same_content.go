@@ -8,6 +8,23 @@ import (
 	"github.com/zlietapki/gena/internal/vfs"
 )
 
+func SingleBlocksSameContent() error {
+	fileMap, err := getFileMap()
+	if err != nil {
+		return err
+	}
+
+	for path, fileEntries := range fileMap {
+		if len(fileEntries) < 2 {
+			continue
+		}
+
+		checkSingleBlocksSameContent(path, fileEntries)
+	}
+
+	return nil
+}
+
 func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) bool {
 	blockMap := map[string][]blockEntry{}
 
