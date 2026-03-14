@@ -5,29 +5,29 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - ENV=local
         - name: vars
-          type: 1
+          type: add
           data:
             - GRPC_LISTEN=:8888
     - name: .env.example
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - ENV=local
         - name: vars
-          type: 1
+          type: add
           data:
             - GRPC_LISTEN=:8888
     - name: .gitignore
       mode: 644
       blocks:
         - name: common
-          type: 2
+          type: merge
           data:
             - .idea/
             - .claude/
@@ -38,7 +38,7 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - '# Builder stage'
             - FROM golang:1.26.1-alpine3.23 AS builder
@@ -64,14 +64,14 @@ files:
             - CMD ["./server"]
             - ""
         - name: expose
-          type: 2
+          type: merge
           data:
             - EXPOSE 8888
     - name: README.md
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - microboiler
             - ===========
@@ -96,7 +96,7 @@ files:
             - '```'
             - ""
         - name: project
-          type: 1
+          type: add
           data:
             - ""
             - grpc_server
@@ -149,7 +149,7 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - 'version: ''3'''
             - ""
@@ -182,18 +182,18 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - 'services:'
             - '  server:'
             - '    build: .'
             - '    ports:'
         - name: ports
-          type: 2
+          type: merge
           data:
             - '      - "8888:8888"'
         - name: post_ports
-          type: 0
+          type: single
           data:
             - '    env_file:'
             - '      - .env'
@@ -201,15 +201,15 @@ files:
       mode: 644
       blocks:
         - name: module
-          type: 0
+          type: single
           data:
             - module github.com/zlietapki/gena
         - name: go_ver
-          type: 0
+          type: single
           data:
             - go 1.26.1
         - name: require
-          type: 2
+          type: merge
           data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
@@ -228,12 +228,12 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package main
                     - ""
                 - name: imports
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"log/slog\""
@@ -251,28 +251,28 @@ dirs:
                     - )
                     - ""
                 - name: main
-                  type: 0
+                  type: single
                   data:
                     - func main() {
                     - "\tcfg := config.New()"
                     - ""
                 - name: usecase_deps
-                  type: 1
+                  type: add
                   data:
                     - ""
                 - name: new_usecase
-                  type: 0
+                  type: single
                   data:
                     - "\tuc := usecase.New(usecase.Depends{"
                 - name: usecase_deps_objs
-                  type: 1
+                  type: add
                 - name: post_usecase_deps_objs
-                  type: 0
+                  type: single
                   data:
                     - "\t})"
                     - ""
                 - name: after_usecase
-                  type: 1
+                  type: add
                   data:
                     - "\tgrpcHandler := grpc_handler.New(uc)"
                     - ""
@@ -285,7 +285,7 @@ dirs:
                     - "\tdefer grpcServer.Stop()"
                     - ""
                 - name: signals
-                  type: 0
+                  type: single
                   data:
                     - "\tsignals := make(chan os.Signal, 1)"
                     - "\tsignal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)"
@@ -294,16 +294,16 @@ dirs:
                     - "\tcase <-signals:"
                     - ""
                 - name: signals_select
-                  type: 1
+                  type: add
                   data:
                     - "\tcase err := <-grpcServerErrCh:"
                     - "\t\tpanic(\"gRPC server:\" + err.Error())"
                 - name: post_signals_select
-                  type: 0
+                  type: single
                   data:
                     - "\t}"
                 - name: bottom
-                  type: 0
+                  type: single
                   data:
                     - '}'
     - name: internal
@@ -316,12 +316,12 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package config
                     - ""
                 - name: import
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"log/slog\""
@@ -332,16 +332,16 @@ dirs:
                     - )
                     - ""
                 - name: post_import
-                  type: 0
+                  type: single
                   data:
                     - type Config struct {
                     - "\tEnv string `envconfig:\"ENV\"`"
                 - name: conf
-                  type: 1
+                  type: add
                   data:
                     - "\tGRPCListen string `envconfig:\"GRPC_LISTEN\"`"
                 - name: rest
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
@@ -364,7 +364,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
@@ -378,27 +378,27 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
                 - name: imports
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"context\""
                     - )
                     - ""
                 - name: usecase
-                  type: 0
+                  type: single
                   data:
                     - type IUsecase interface {
                 - name: methods
-                  type: 2
+                  type: merge
                   data:
                     - "\tHello(ctx context.Context, name string) (string, error)"
                 - name: post_methods
-                  type: 0
+                  type: single
                   data:
                     - '}'
         - name: grpc_handler
@@ -408,7 +408,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package grpc_handler
                     - ""
@@ -432,7 +432,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package grpc_handler
                     - ""
@@ -459,7 +459,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package usecase
                     - ""
@@ -477,7 +477,7 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package usecase
                     - ""
@@ -487,26 +487,26 @@ dirs:
                     - ""
                     - type Usecase struct {
                 - name: uc_struct
-                  type: 1
+                  type: add
                 - name: post_uc_struct
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
                     - type Depends struct {
                 - name: deps
-                  type: 1
+                  type: add
                 - name: post_deps
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
                     - func New(deps Depends) *Usecase {
                     - "\treturn &Usecase{"
                 - name: new
-                  type: 1
+                  type: add
                 - name: post_new
-                  type: 0
+                  type: single
                   data:
                     - "\t}"
                     - '}'
@@ -520,7 +520,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package grpcserver
                     - ""
@@ -589,7 +589,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package grpcserver
                     - ""

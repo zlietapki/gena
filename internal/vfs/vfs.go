@@ -7,12 +7,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type BlockType int
+type BlockType string
 
 const (
-	BlockTypeSingle BlockType = iota
-	BlockTypeAdd
-	BlockTypeMerge
+	BlockTypeSingle BlockType = "single"
+	BlockTypeAdd    BlockType = "add"
+	BlockTypeMerge  BlockType = "merge"
 )
 
 type OctalMode os.FileMode

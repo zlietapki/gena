@@ -5,29 +5,29 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - ENV=local
         - name: vars
-          type: 1
+          type: add
           data:
             - HTTP_LISTEN=:8080
     - name: .env.example
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - ENV=local
         - name: vars
-          type: 1
+          type: add
           data:
             - HTTP_LISTEN=:8080
     - name: .gitignore
       mode: 644
       blocks:
         - name: common
-          type: 2
+          type: merge
           data:
             - .idea/
             - .claude/
@@ -38,7 +38,7 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - '# Builder stage'
             - FROM golang:1.26.1-alpine3.23 AS builder
@@ -64,14 +64,14 @@ files:
             - CMD ["./server"]
             - ""
         - name: expose
-          type: 2
+          type: merge
           data:
             - EXPOSE 8080
     - name: README.md
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - microboiler
             - ===========
@@ -96,7 +96,7 @@ files:
             - '```'
             - ""
         - name: project
-          type: 1
+          type: add
           data:
             - ""
             - rest_server
@@ -136,7 +136,7 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - 'version: ''3'''
             - ""
@@ -166,7 +166,7 @@ files:
             - '      - go fmt ./...'
             - '      - go vet ./...'
         - name: gen_rest_models
-          type: 0
+          type: single
           data:
             - '  oapi_tools:'
             - '    desc: Install tool bins'
@@ -191,18 +191,18 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - 'services:'
             - '  server:'
             - '    build: .'
             - '    ports:'
         - name: ports
-          type: 2
+          type: merge
           data:
             - '      - "8080:8080"'
         - name: post_ports
-          type: 0
+          type: single
           data:
             - '    env_file:'
             - '      - .env'
@@ -210,15 +210,15 @@ files:
       mode: 644
       blocks:
         - name: module
-          type: 0
+          type: single
           data:
             - module github.com/zlietapki/gena
         - name: go_ver
-          type: 0
+          type: single
           data:
             - go 1.26.1
         - name: require
-          type: 2
+          type: merge
           data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
@@ -233,7 +233,7 @@ dirs:
           mode: 644
           blocks:
             - name: noblocks
-              type: 0
+              type: single
               data:
                 - 'package: rest_models'
                 - 'generate:'
@@ -243,7 +243,7 @@ dirs:
           mode: 644
           blocks:
             - name: noblocks
-              type: 0
+              type: single
               data:
                 - 'openapi: 3.0.3'
                 - 'info:'
@@ -281,12 +281,12 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package main
                     - ""
                 - name: imports
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"log/slog\""
@@ -302,31 +302,31 @@ dirs:
                     - )
                     - ""
                 - name: main
-                  type: 0
+                  type: single
                   data:
                     - func main() {
                     - "\tcfg := config.New()"
                     - ""
                 - name: usecase_deps
-                  type: 1
+                  type: add
                   data:
                     - "\tmapRepo := map_repo.New()"
                     - ""
                 - name: new_usecase
-                  type: 0
+                  type: single
                   data:
                     - "\tuc := usecase.New(usecase.Depends{"
                 - name: usecase_deps_objs
-                  type: 1
+                  type: add
                   data:
                     - "\t\tMemRepo: mapRepo,"
                 - name: post_usecase_deps_objs
-                  type: 0
+                  type: single
                   data:
                     - "\t})"
                     - ""
                 - name: after_usecase
-                  type: 1
+                  type: add
                   data:
                     - "\trestHandler := rest_handler.New(uc)"
                     - ""
@@ -339,7 +339,7 @@ dirs:
                     - "\tslog.Info(\"HTTP listening\", \"addr\", cfg.HTTPListen)"
                     - ""
                 - name: signals
-                  type: 0
+                  type: single
                   data:
                     - "\tsignals := make(chan os.Signal, 1)"
                     - "\tsignal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)"
@@ -348,16 +348,16 @@ dirs:
                     - "\tcase <-signals:"
                     - ""
                 - name: signals_select
-                  type: 1
+                  type: add
                   data:
                     - "\tcase err := <-httpErrCh:"
                     - "\t\tpanic(\"http server\" + err.Error())"
                 - name: post_signals_select
-                  type: 0
+                  type: single
                   data:
                     - "\t}"
                 - name: bottom
-                  type: 0
+                  type: single
                   data:
                     - '}'
     - name: internal
@@ -370,12 +370,12 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package config
                     - ""
                 - name: import
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"log/slog\""
@@ -386,16 +386,16 @@ dirs:
                     - )
                     - ""
                 - name: post_import
-                  type: 0
+                  type: single
                   data:
                     - type Config struct {
                     - "\tEnv string `envconfig:\"ENV\"`"
                 - name: conf
-                  type: 1
+                  type: add
                   data:
                     - "\tHTTPListen string `envconfig:\"HTTP_LISTEN\"`"
                 - name: rest
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
@@ -418,7 +418,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
@@ -429,7 +429,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
@@ -440,20 +440,20 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
                 - name: usecase
-                  type: 0
+                  type: single
                   data:
                     - type IUsecase interface {
                 - name: methods
-                  type: 2
+                  type: merge
                   data:
                     - "\tGetCounter() (Counter, error)"
                 - name: post_methods
-                  type: 0
+                  type: single
                   data:
                     - '}'
         - name: map_repo
@@ -463,7 +463,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package map_repo
                     - ""
@@ -480,39 +480,39 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package map_repo
                     - ""
                 - name: imports
-                  type: 2
+                  type: merge
                   data:
                     - import "github.com/zlietapki/gena/internal/domain"
                     - ""
                 - name: post_imports
-                  type: 0
+                  type: single
                   data:
                     - ""
                     - var _ domain.ICounterRepo = (*MapRepo)(nil) // compile-time check
                     - ""
                     - type MapRepo struct {
                 - name: repo_struct
-                  type: 2
+                  type: merge
                   data:
                     - "\tmem map[string]int"
                 - name: post_repo_struct
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
                     - func New() *MapRepo {
                     - "\treturn &MapRepo{"
                 - name: repo_init
-                  type: 2
+                  type: merge
                   data:
                     - "\t\tmem: make(map[string]int),"
                 - name: post_repo_init
-                  type: 0
+                  type: single
                   data:
                     - "\t}"
                     - '}'
@@ -523,7 +523,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package rest_handler
                     - ""
@@ -541,7 +541,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package rest_handler
                     - ""
@@ -563,7 +563,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package rest_handler
                     - ""
@@ -585,7 +585,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - // Package rest_models provides primitives to interact with the openapi HTTP API.
                     - //
@@ -603,7 +603,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package usecase
                     - ""
@@ -616,7 +616,7 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package usecase
                     - ""
@@ -626,32 +626,32 @@ dirs:
                     - ""
                     - type Usecase struct {
                 - name: uc_struct
-                  type: 1
+                  type: add
                   data:
                     - "\tcounterRepo domain.ICounterRepo"
                 - name: post_uc_struct
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
                     - type Depends struct {
                 - name: deps
-                  type: 1
+                  type: add
                   data:
                     - "\tMemRepo domain.ICounterRepo"
                 - name: post_deps
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
                     - func New(deps Depends) *Usecase {
                     - "\treturn &Usecase{"
                 - name: new
-                  type: 1
+                  type: add
                   data:
                     - "\t\tcounterRepo: deps.MemRepo,"
                 - name: post_new
-                  type: 0
+                  type: single
                   data:
                     - "\t}"
                     - '}'
@@ -665,7 +665,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package httpserver
                     - ""

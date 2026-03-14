@@ -5,11 +5,11 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - ENV=local
         - name: vars
-          type: 1
+          type: add
           data:
             - KAFKA_BROKERS=127.0.0.1:19092
             - KAFKA_USER=superuser
@@ -21,11 +21,11 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - ENV=local
         - name: vars
-          type: 1
+          type: add
           data:
             - KAFKA_BROKERS=127.0.0.1:19092
             - KAFKA_USER=superuser
@@ -37,7 +37,7 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 2
+          type: merge
           data:
             - .idea/
             - .claude/
@@ -48,7 +48,7 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - '# Builder stage'
             - FROM golang:1.26.1-alpine3.23 AS builder
@@ -77,7 +77,7 @@ files:
       mode: 644
       blocks:
         - name: noblocks
-          type: 0
+          type: single
           data:
             - microboiler
             - ===========
@@ -99,7 +99,7 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - 'version: ''3'''
             - ""
@@ -132,18 +132,18 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - 'services:'
             - '  server:'
             - '    build: .'
             - '    ports:'
         - name: ports
-          type: 2
+          type: merge
           data:
             - '      - "8080:8080"'
         - name: post_ports
-          type: 0
+          type: single
           data:
             - '    env_file:'
             - '      - .env'
@@ -151,11 +151,11 @@ files:
       mode: 644
       blocks:
         - name: common
-          type: 0
+          type: single
           data:
             - 'services:'
         - name: redpanda
-          type: 0
+          type: single
           data:
             - '  redpanda-0:'
             - '    image: redpandadata/redpanda:v25.3.10'
@@ -271,15 +271,15 @@ files:
       mode: 644
       blocks:
         - name: module
-          type: 0
+          type: single
           data:
             - module github.com/zlietapki/gena
         - name: go_ver
-          type: 0
+          type: single
           data:
             - go 1.26.1
         - name: require
-          type: 2
+          type: merge
           data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
@@ -290,7 +290,7 @@ files:
       mode: 644
       blocks:
         - name: noblocks
-          type: 0
+          type: single
           data:
             - 'kafka_api:'
             - '  sasl:'
@@ -320,12 +320,12 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package main
                     - ""
                 - name: imports
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"context\""
@@ -338,13 +338,13 @@ dirs:
                     - )
                     - ""
                 - name: main
-                  type: 0
+                  type: single
                   data:
                     - func main() {
                     - "\tcfg := config.New()"
                     - ""
                 - name: usecase_deps
-                  type: 1
+                  type: add
                   data:
                     - "\tkafkaClient, err := kafka.NewClient(cfg.Kafka)"
                     - "\tif err != nil {"
@@ -361,20 +361,20 @@ dirs:
                     - "\tproducer := kafka.NewProducer(kafkaClient.Kgo())"
                     - ""
                 - name: new_usecase
-                  type: 0
+                  type: single
                   data:
                     - "\tuc := usecase.New(usecase.Depends{"
                 - name: usecase_deps_objs
-                  type: 1
+                  type: add
                   data:
                     - "\t\tEventPublisher: producer,"
                 - name: post_usecase_deps_objs
-                  type: 0
+                  type: single
                   data:
                     - "\t})"
                     - ""
                 - name: after_usecase
-                  type: 1
+                  type: add
                   data:
                     - "\tctx := context.Background()"
                     - ""
@@ -384,7 +384,7 @@ dirs:
                     - "\t}"
                     - ""
                 - name: bottom
-                  type: 0
+                  type: single
                   data:
                     - '}'
     - name: internal
@@ -397,12 +397,12 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package config
                     - ""
                 - name: import
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"log/slog\""
@@ -414,16 +414,16 @@ dirs:
                     - )
                     - ""
                 - name: post_import
-                  type: 0
+                  type: single
                   data:
                     - type Config struct {
                     - "\tEnv string `envconfig:\"ENV\"`"
                 - name: conf
-                  type: 1
+                  type: add
                   data:
                     - "\tKafka kafka.Config"
                 - name: rest
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
@@ -446,7 +446,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
@@ -461,7 +461,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
@@ -474,27 +474,27 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package domain
                     - ""
                 - name: imports
-                  type: 2
+                  type: merge
                   data:
                     - import (
                     - "\t\"context\""
                     - )
                     - ""
                 - name: usecase
-                  type: 0
+                  type: single
                   data:
                     - type IUsecase interface {
                 - name: methods
-                  type: 2
+                  type: merge
                   data:
                     - "\tExample(ctx context.Context) error"
                 - name: post_methods
-                  type: 0
+                  type: single
                   data:
                     - '}'
         - name: kafka
@@ -504,7 +504,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package kafka
                     - ""
@@ -587,7 +587,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package kafka
                     - ""
@@ -609,7 +609,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package kafka
                     - ""
@@ -662,7 +662,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package kafka
                     - ""
@@ -692,7 +692,7 @@ dirs:
               mode: 644
               blocks:
                 - name: noblocks
-                  type: 0
+                  type: single
                   data:
                     - package usecase
                     - ""
@@ -721,7 +721,7 @@ dirs:
               mode: 644
               blocks:
                 - name: top
-                  type: 0
+                  type: single
                   data:
                     - package usecase
                     - ""
@@ -731,32 +731,32 @@ dirs:
                     - ""
                     - type Usecase struct {
                 - name: uc_struct
-                  type: 1
+                  type: add
                   data:
                     - "\teventPublisher domain.IEventPublisher"
                 - name: post_uc_struct
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
                     - type Depends struct {
                 - name: deps
-                  type: 1
+                  type: add
                   data:
                     - "\tEventPublisher domain.IEventPublisher"
                 - name: post_deps
-                  type: 0
+                  type: single
                   data:
                     - '}'
                     - ""
                     - func New(deps Depends) *Usecase {
                     - "\treturn &Usecase{"
                 - name: new
-                  type: 1
+                  type: add
                   data:
                     - "\t\teventPublisher: deps.EventPublisher,"
                 - name: post_new
-                  type: 0
+                  type: single
                   data:
                     - "\t}"
                     - '}'
