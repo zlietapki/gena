@@ -13,6 +13,7 @@ func MergeDirs(dirs ...vfs.Directory) vfs.Directory {
 	for _, d := range dirs[1:] {
 		result = vfs.Directory{
 			Name:  result.Name,
+			Mode:  result.Mode,
 			Dirs:  addDirs(result.Dirs, d.Dirs),
 			Files: addFiles(result.Files, d.Files),
 		}
@@ -61,7 +62,8 @@ func addFiles(filesA, filesB []vfs.File) []vfs.File {
 	for _, fileB := range filesB {
 		if fileA, ok := fileByName[fileB.Name]; ok {
 			fileByName[fileB.Name] = vfs.File{
-				Name:   fileB.Name,
+				Name:   fileA.Name,
+				Mode:   fileA.Mode,
 				Blocks: addBlocks(fileA.Blocks, fileB.Blocks),
 			}
 		} else {

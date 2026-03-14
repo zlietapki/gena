@@ -29,7 +29,11 @@ func main() {
 	}
 
 	// post checks
-	if err := indexchecker.CheckProjects(); err != nil {
+	if err := indexchecker.SingleBlocksSameContent(); err != nil {
+		fmt.Printf("ERROR %s", err)
+	}
+
+	if err := indexchecker.BlocksSameType(); err != nil {
 		fmt.Printf("ERROR %s", err)
 	}
 

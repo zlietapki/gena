@@ -1,54 +1,53 @@
 package indexchecker
 
 import (
-	"fmt"
-	"path/filepath"
-	"reflect"
-
-	"github.com/zlietapki/gena/internal/difflib"
 	"github.com/zlietapki/gena/internal/vfs"
 	"github.com/zlietapki/gena/pkg/indexes"
 )
-
-type fileEntry struct {
-	projName string
-	file     vfs.File
-}
-
-type fileCollector struct {
-	fileMap map[string][]fileEntry
-}
-
-func newFileCollector() *fileCollector {
-	return &fileCollector{
-		fileMap: make(map[string][]fileEntry),
-	}
-}
-
-func (c *fileCollector) collect(projName string, dir vfs.Directory, prefix string) {
-	for _, file := range dir.Files {
-		fullPath := filepath.Join(prefix, file.Name)
-
-		c.fileMap[fullPath] = append(c.fileMap[fullPath], fileEntry{
-			projName: projName,
-			file:     file,
-		})
-	}
-
-	for _, sub := range dir.Dirs {
-		c.collect(projName, sub, filepath.Join(prefix, sub.Name))
-	}
-}
 
 type blockEntry struct {
 	projName string
 	block    vfs.Block
 }
 
-func CheckProjects() error {
-	projs, err := indexes.GetAll()
+func SingleBlocksSameContent() error {
+	fileMap, err := getFileMap()
 	if err != nil {
 		return err
+	}
+
+	for path, fileEntries := range fileMap {
+		if len(fileEntries) < 2 {
+			continue
+		}
+
+		_ = checkSingleBlocksSameContent(path, fileEntries)
+	}
+
+	return nil
+}
+
+func BlocksSameType() error {
+	fileMap, err := getFileMap()
+	if err != nil {
+		return err
+	}
+
+	for path, fileEntries := range fileMap {
+		if len(fileEntries) < 2 {
+			continue
+		}
+
+		_ = checkBlockSameTypes(path, fileEntries)
+	}
+
+	return nil
+}
+
+func getFileMap() (fileMapType, error) {
+	projs, err := indexes.GetAll()
+	if err != nil {
+		return nil, err
 	}
 
 	fc := newFileCollector()
@@ -56,96 +55,7 @@ func CheckProjects() error {
 		fc.collect(projName, dir, "")
 	}
 
-	for path, fileEntries := range fc.fileMap {
-		if len(fileEntries) < 2 {
-			continue
-		}
-
-		_ = checkSingleBlocksSameContent(path, fileEntries)
-		_ = checkBlockSameTypes(path, fileEntries)
-	}
-
-	return nil
-}
-
-func checkBlockSameTypes(path string, fileEntries []fileEntry) bool {
-	blockMap := map[string][]blockEntry{}
-
-	for _, fileEnt := range fileEntries {
-		for _, block := range fileEnt.file.Blocks {
-			blockMap[block.Name] = append(blockMap[block.Name], blockEntry{
-				projName: fileEnt.projName,
-				block:    block,
-			})
-		}
-	}
-
-	ok := true
-	for blockName, blockEntries := range blockMap {
-		if len(blockEntries) < 2 {
-			continue
-		}
-
-		ref := blockEntries[0].block.Type
-		for _, be := range blockEntries[1:] {
-			if ref != be.block.Type {
-				fmt.Printf(`Block type mismatch:
-	file=%q block=%q
-	%s
-	%s
-`,
-					path, blockName, blockEntries[0].projName, be.projName)
-				ok = false
-			}
-		}
-	}
-
-	return ok
-}
-
-func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) bool {
-	blockMap := map[string][]blockEntry{}
-
-	for _, fileEnt := range fileEntries {
-		for _, block := range fileEnt.file.Blocks {
-			if block.Type == vfs.BlockTypeSingle {
-				blockMap[block.Name] = append(blockMap[block.Name], blockEntry{
-					projName: fileEnt.projName,
-					block:    block,
-				})
-			}
-		}
-	}
-
-	ok := true
-	for blockName, blockEntries := range blockMap {
-		if len(blockEntries) < 2 {
-			continue
-		}
-
-		firstBlockData := blockEntries[0].block.Data
-		for _, be := range blockEntries[1:] {
-			if !reflect.DeepEqual(firstBlockData, be.block.Data) {
-				fmt.Printf(`Different content in blocks type:single
-	file=%q block=%q
-	%s
-	%s
-`,
-					path, blockName, blockEntries[0].projName, be.projName)
-				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-					A:        withNewlines(firstBlockData),
-					B:        withNewlines(be.block.Data),
-					FromFile: blockEntries[0].projName,
-					ToFile:   be.projName,
-					Context:  3,
-				})
-				fmt.Print(diffStr)
-				ok = false
-			}
-		}
-	}
-
-	return ok
+	return fc.fileMap, nil
 }
 
 func withNewlines(lines []string) []string {
