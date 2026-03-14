@@ -1,4 +1,4 @@
-package check_ymls
+package indexchecker
 
 import (
 	"fmt"

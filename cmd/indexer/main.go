@@ -7,8 +7,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/zlietapki/gena/internal/check_ymls"
 	"github.com/zlietapki/gena/internal/fsindex"
+	"github.com/zlietapki/gena/internal/indexchecker"
 	"github.com/zlietapki/gena/internal/vfs"
 )
 
@@ -28,7 +28,8 @@ func main() {
 		panic(err)
 	}
 
-	if err := check_ymls.CheckProjects(); err != nil {
+	// post checks
+	if err := indexchecker.CheckProjects(); err != nil {
 		fmt.Printf("ERROR %s", err)
 	}
 
