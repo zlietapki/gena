@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zlietapki/microboiler/internal/vfs"
+	"github.com/zlietapki/gena/internal/vfs"
 )
 
 func getGoModBlocks(path string) ([]vfs.Block, error) {

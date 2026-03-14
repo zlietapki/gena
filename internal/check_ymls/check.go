@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"github.com/zlietapki/microboiler/internal/difflib"
-	"github.com/zlietapki/microboiler/internal/vfs"
-	"github.com/zlietapki/microboiler/pkg/projects"
+	"github.com/zlietapki/gena/internal/difflib"
+	"github.com/zlietapki/gena/internal/vfs"
+	"github.com/zlietapki/gena/pkg/indexes"
 )
 
 type fileEntry struct {
@@ -46,13 +46,13 @@ type blockEntry struct {
 }
 
 func CheckProjects() error {
-	projects, err := projects.GetAll()
+	projs, err := indexes.GetAll()
 	if err != nil {
 		return err
 	}
 
 	fc := newFileCollector()
-	for projName, dir := range projects {
+	for projName, dir := range projs {
 		fc.collect(projName, dir, "")
 	}
 

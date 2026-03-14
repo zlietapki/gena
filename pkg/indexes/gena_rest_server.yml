@@ -1,4 +1,4 @@
-name: microboiler_grpc_server
+name: gena_rest_server
 mode: 755
 files:
     - name: .env
@@ -11,7 +11,7 @@ files:
         - name: vars
           type: 1
           data:
-            - GRPC_LISTEN=:8888
+            - HTTP_LISTEN=:8080
     - name: .env.example
       mode: 644
       blocks:
@@ -22,7 +22,7 @@ files:
         - name: vars
           type: 1
           data:
-            - GRPC_LISTEN=:8888
+            - HTTP_LISTEN=:8080
     - name: .gitignore
       mode: 644
       blocks:
@@ -66,7 +66,7 @@ files:
         - name: expose
           type: 2
           data:
-            - EXPOSE 8888
+            - EXPOSE 8080
     - name: README.md
       mode: 644
       blocks:
@@ -99,23 +99,25 @@ files:
           type: 1
           data:
             - ""
-            - grpc_server
+            - rest_server
             - '-----------'
             - ""
-            - Boilerplate gRPC microservice template. Clean architecture, standard Go project layout.
+            - Boilerplate REST microservice template. Clean architecture, standard Go project layout.
             - ""
             - '### Structure'
             - ""
             - '```'
+            - api/                 — proto/contract references
             - cmd/server/          — entrypoint
             - internal/
             - '  config/            — env-based config'
             - '  domain/            — entities, interfaces (Repository)'
             - '  repository/        — infrastructure stub impl'
+            - '  rest_handler/      — REST transport handlers'
+            - '  rest_models/       — REST models'
             - '  usecase/           — business logic'
-            - '  grpc_handler/      — gRPC transport handlers'
             - pkg/
-            - '  grpcserver/        — gRPC server + interceptors'
+            - '  httpserver/        — http server + interceptors'
             - '```'
             - ""
             - '### Test / Lint'
@@ -125,25 +127,10 @@ files:
             - task lint
             - '```'
             - ""
-            - '### Health check'
-            - ""
-            - '```bash'
-            - grpcurl -plaintext localhost:8888 grpc.health.v1.Health/Check
-            - '```'
-            - ""
             - '### Example requests'
             - ""
-            - '```shell'
-            - grpcurl -plaintext localhost:8888 list
-            - grpcurl -plaintext localhost:8888 list api.proto.Example
-            - grpcurl -plaintext localhost:8888 describe api.proto.Example.Hello
-            - grpcurl -plaintext localhost:8888 describe .api.proto.HelloReq
-            - ""
-            - grpcurl -plaintext -d @ localhost:8888 api.proto.Example.Hello <<EOM
-            - '{'
-            - '  "name": "ZlieTapki"'
-            - '}'
-            - EOM
+            - '```bash'
+            - curl http://localhost:8080/api/counter
             - '```'
     - name: Taskfile.yml
       mode: 644
@@ -178,6 +165,28 @@ files:
             - '    cmds:'
             - '      - go fmt ./...'
             - '      - go vet ./...'
+        - name: gen_rest_models
+          type: 0
+          data:
+            - '  oapi_tools:'
+            - '    desc: Install tool bins'
+            - '    run: once'
+            - '    env:'
+            - '      GOBIN:'
+            - '        sh: "echo `pwd`/bin"'
+            - '    cmds:'
+            - '      - go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.6.0'
+            - '    sources: # run if changed'
+            - '      - Taskfile.yml'
+            - '    generates: # run if missing'
+            - '      - "bin/oapi-codegen"'
+            - ""
+            - '  generate_models:'
+            - '    desc: Generate models'
+            - '    deps:'
+            - '      - oapi_tools'
+            - '    cmds:'
+            - '      - bin/oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
     - name: docker-compose-server.yml
       mode: 644
       blocks:
@@ -191,7 +200,7 @@ files:
         - name: ports
           type: 2
           data:
-            - '      - "8888:8888"'
+            - '      - "8080:8080"'
         - name: post_ports
           type: 0
           data:
@@ -203,7 +212,7 @@ files:
         - name: module
           type: 0
           data:
-            - module github.com/zlietapki/boilerplate
+            - module github.com/zlietapki/gena
         - name: go_ver
           type: 0
           data:
@@ -213,11 +222,55 @@ files:
           data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
+            - "\tgithub.com/labstack/echo/v5 v5.0.4"
             - "\tgithub.com/kelseyhightower/envconfig v1.4.0"
-            - "\tgithub.com/zlietapki/microboiler_api_contracts v0.0.2"
-            - "\tgoogle.golang.org/grpc v1.79.2"
             - )
 dirs:
+    - name: api
+      mode: 755
+      files:
+        - name: oapi-codegen.yml
+          mode: 644
+          blocks:
+            - name: noblocks
+              type: 0
+              data:
+                - 'package: rest_models'
+                - 'generate:'
+                - '  models: true'
+                - 'output: internal/rest_models/models.gen.go'
+        - name: swagger.yml
+          mode: 644
+          blocks:
+            - name: noblocks
+              type: 0
+              data:
+                - 'openapi: 3.0.3'
+                - 'info:'
+                - '  title: Rest Server User API'
+                - '  version: 1.0.0'
+                - 'paths:'
+                - '  /api/counter:'
+                - '    get:'
+                - '      summary: Get counter'
+                - '      operationId: getCounter'
+                - '      responses:'
+                - '        ''200'':'
+                - '          description: OK'
+                - '          content:'
+                - '            application/json:'
+                - '              schema:'
+                - '                $ref: ''#/components/schemas/Counter'''
+                - 'components:'
+                - '  schemas:'
+                - '    Counter:'
+                - '      type: object'
+                - '      required: [value]'
+                - '      properties:'
+                - '        value:'
+                - '          type: integer'
+    - name: bin
+      mode: 755
     - name: cmd
       mode: 755
       dirs:
@@ -241,12 +294,11 @@ dirs:
                     - "\t\"os/signal\""
                     - "\t\"syscall\""
                     - ""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/config\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/grpc_handler\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/usecase\""
-                    - "\t\"github.com/zlietapki/boilerplate/pkg/grpcserver\""
-                    - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
-                    - "\t\"google.golang.org/grpc\""
+                    - "\t\"github.com/zlietapki/gena/internal/config\""
+                    - "\t\"github.com/zlietapki/gena/internal/map_repo\""
+                    - "\t\"github.com/zlietapki/gena/internal/rest_handler\""
+                    - "\t\"github.com/zlietapki/gena/internal/usecase\""
+                    - "\t\"github.com/zlietapki/gena/pkg/httpserver\""
                     - )
                     - ""
                 - name: main
@@ -258,6 +310,7 @@ dirs:
                 - name: usecase_deps
                   type: 1
                   data:
+                    - "\tmapRepo := map_repo.New()"
                     - ""
                 - name: new_usecase
                   type: 0
@@ -265,6 +318,8 @@ dirs:
                     - "\tuc := usecase.New(usecase.Depends{"
                 - name: usecase_deps_objs
                   type: 1
+                  data:
+                    - "\t\tMemRepo: mapRepo,"
                 - name: post_usecase_deps_objs
                   type: 0
                   data:
@@ -273,15 +328,15 @@ dirs:
                 - name: after_usecase
                   type: 1
                   data:
-                    - "\tgrpcHandler := grpc_handler.New(uc)"
+                    - "\trestHandler := rest_handler.New(uc)"
                     - ""
-                    - "\tgrpcServer := grpcserver.New(cfg.GRPCListen, func(s *grpc.Server) {"
-                    - "\t\tpb.RegisterExampleServer(s, grpcHandler)"
-                    - "\t})"
+                    - "\thttpServer := httpserver.New(cfg.HTTPListen)"
                     - ""
-                    - "\tgrpcServerErrCh := grpcServer.Start()"
-                    - "\tslog.Info(\"gRPC listening\", \"addr\", cfg.GRPCListen)"
-                    - "\tdefer grpcServer.Stop()"
+                    - "\tapi := httpServer.Srv.Group(\"/api\")"
+                    - "\tapi.GET(\"/counter\", restHandler.GetCounter)"
+                    - ""
+                    - "\thttpErrCh := httpServer.Start()"
+                    - "\tslog.Info(\"HTTP listening\", \"addr\", cfg.HTTPListen)"
                     - ""
                 - name: signals
                   type: 0
@@ -295,8 +350,8 @@ dirs:
                 - name: signals_select
                   type: 1
                   data:
-                    - "\tcase err := <-grpcServerErrCh:"
-                    - "\t\tpanic(\"gRPC server:\" + err.Error())"
+                    - "\tcase err := <-httpErrCh:"
+                    - "\t\tpanic(\"http server\" + err.Error())"
                 - name: post_signals_select
                   type: 0
                   data:
@@ -338,7 +393,7 @@ dirs:
                 - name: conf
                   type: 1
                   data:
-                    - "\tGRPCListen string `envconfig:\"GRPC_LISTEN\"`"
+                    - "\tHTTPListen string `envconfig:\"HTTP_LISTEN\"`"
                 - name: rest
                   type: 0
                   data:
@@ -359,7 +414,7 @@ dirs:
         - name: domain
           mode: 755
           files:
-            - name: errors.go
+            - name: counter_repo.go
               mode: 644
               blocks:
                 - name: noblocks
@@ -367,12 +422,20 @@ dirs:
                   data:
                     - package domain
                     - ""
-                    - import "errors"
+                    - type ICounterRepo interface {
+                    - "\tGetNextCounter() (Counter, error)"
+                    - '}'
+            - name: models.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package domain
                     - ""
-                    - var (
-                    - "\tErrNotFound = errors.New(\"not found\")"
-                    - "\tErrConflict = errors.New(\"conflict\")"
-                    - )
+                    - type Counter struct {
+                    - "\tValue int `json:\"value\"`"
+                    - '}'
             - name: usecase.go
               mode: 644
               blocks:
@@ -381,13 +444,6 @@ dirs:
                   data:
                     - package domain
                     - ""
-                - name: imports
-                  type: 2
-                  data:
-                    - import (
-                    - "\t\"context\""
-                    - )
-                    - ""
                 - name: usecase
                   type: 0
                   data:
@@ -395,65 +451,155 @@ dirs:
                 - name: methods
                   type: 2
                   data:
-                    - "\tHello(ctx context.Context, name string) (string, error)"
+                    - "\tGetCounter() (Counter, error)"
                 - name: post_methods
                   type: 0
                   data:
                     - '}'
-        - name: grpc_handler
+        - name: map_repo
           mode: 755
           files:
-            - name: grpc_handler.go
+            - name: m_get_next_count.go
               mode: 644
               blocks:
                 - name: noblocks
                   type: 0
                   data:
-                    - package grpc_handler
+                    - package map_repo
                     - ""
-                    - import (
-                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
-                    - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
-                    - )
+                    - import "github.com/zlietapki/gena/internal/domain"
                     - ""
-                    - type Handler struct {
-                    - "\tpb.UnimplementedExampleServer"
-                    - "\tuc domain.IUsecase"
+                    - func (r *MapRepo) GetNextCounter() (domain.Counter, error) {
+                    - "\tr.mem[\"count\"]++"
+                    - ""
+                    - "\treturn domain.Counter{"
+                    - "\t\tValue: r.mem[\"count\"],"
+                    - "\t}, nil"
+                    - '}'
+            - name: map_repo.go
+              mode: 644
+              blocks:
+                - name: top
+                  type: 0
+                  data:
+                    - package map_repo
+                    - ""
+                - name: imports
+                  type: 2
+                  data:
+                    - import "github.com/zlietapki/gena/internal/domain"
+                    - ""
+                - name: post_imports
+                  type: 0
+                  data:
+                    - ""
+                    - var _ domain.ICounterRepo = (*MapRepo)(nil) // compile-time check
+                    - ""
+                    - type MapRepo struct {
+                - name: repo_struct
+                  type: 2
+                  data:
+                    - "\tmem map[string]int"
+                - name: post_repo_struct
+                  type: 0
+                  data:
                     - '}'
                     - ""
-                    - func New(uc domain.IUsecase) *Handler {
-                    - "\treturn &Handler{"
+                    - func New() *MapRepo {
+                    - "\treturn &MapRepo{"
+                - name: repo_init
+                  type: 2
+                  data:
+                    - "\t\tmem: make(map[string]int),"
+                - name: post_repo_init
+                  type: 0
+                  data:
+                    - "\t}"
+                    - '}'
+        - name: rest_handler
+          mode: 755
+          files:
+            - name: convert.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package rest_handler
+                    - ""
+                    - import (
+                    - "\t\"github.com/zlietapki/gena/internal/domain\""
+                    - "\t\"github.com/zlietapki/gena/internal/rest_models\""
+                    - )
+                    - ""
+                    - func domainCounterToRestAPI(u domain.Counter) rest_models.Counter {
+                    - "\treturn rest_models.Counter{"
+                    - "\t\tValue: u.Value,"
+                    - "\t}"
+                    - '}'
+            - name: m_get_counter.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package rest_handler
+                    - ""
+                    - import (
+                    - "\t\"net/http\""
+                    - ""
+                    - "\t\"github.com/labstack/echo/v5\""
+                    - )
+                    - ""
+                    - func (h *UserHandler) GetCounter(c *echo.Context) error {
+                    - "\tcounter, err := h.uc.GetCounter()"
+                    - "\tif err != nil {"
+                    - "\t\treturn c.JSON(http.StatusInternalServerError, map[string]string{\"error\": err.Error()})"
+                    - "\t}"
+                    - ""
+                    - "\treturn c.JSON(http.StatusOK, domainCounterToRestAPI(counter))"
+                    - '}'
+            - name: rest_handler.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package rest_handler
+                    - ""
+                    - import "github.com/zlietapki/gena/internal/usecase"
+                    - ""
+                    - type UserHandler struct {
+                    - "\tuc *usecase.Usecase"
+                    - '}'
+                    - ""
+                    - func New(uc *usecase.Usecase) *UserHandler {
+                    - "\treturn &UserHandler{"
                     - "\t\tuc: uc,"
                     - "\t}"
                     - '}'
-            - name: m_hello.go
+        - name: rest_models
+          mode: 755
+          files:
+            - name: models.gen.go
               mode: 644
               blocks:
                 - name: noblocks
                   type: 0
                   data:
-                    - package grpc_handler
+                    - // Package rest_models provides primitives to interact with the openapi HTTP API.
+                    - //
+                    - // Code generated by github.com/oapi-codegen/oapi-codegen/v2 version v2.6.0 DO NOT EDIT.
+                    - package rest_models
                     - ""
-                    - import (
-                    - "\t\"context\""
-                    - ""
-                    - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
-                    - )
-                    - ""
-                    - func (h *Handler) Hello(ctx context.Context, req *pb.HelloReq) (*pb.HelloRes, error) {
-                    - "\tresp, err := h.uc.Hello(ctx, req.Name)"
-                    - "\tif err != nil {"
-                    - "\t\treturn nil, err"
-                    - "\t}"
-                    - ""
-                    - "\treturn &pb.HelloRes{"
-                    - "\t\tHello: resp,"
-                    - "\t}, nil"
+                    - // Counter defines model for Counter.
+                    - type Counter struct {
+                    - "\tValue int `json:\"value\"`"
                     - '}'
         - name: usecase
           mode: 755
           files:
-            - name: m_hello.go
+            - name: m_get_counter.go
               mode: 644
               blocks:
                 - name: noblocks
@@ -461,15 +607,10 @@ dirs:
                   data:
                     - package usecase
                     - ""
-                    - import (
-                    - "\t\"context\""
-                    - "\t\"fmt\""
-                    - )
+                    - import "github.com/zlietapki/gena/internal/domain"
                     - ""
-                    - func (u Usecase) Hello(ctx context.Context, name string) (string, error) {
-                    - "\tres := fmt.Sprintf(\"Hello: %s\", name)"
-                    - ""
-                    - "\treturn res, nil"
+                    - func (uc *Usecase) GetCounter() (domain.Counter, error) {
+                    - "\treturn uc.counterRepo.GetNextCounter()"
                     - '}'
             - name: uc.go
               mode: 644
@@ -479,13 +620,15 @@ dirs:
                   data:
                     - package usecase
                     - ""
-                    - import "github.com/zlietapki/boilerplate/internal/domain"
+                    - import "github.com/zlietapki/gena/internal/domain"
                     - ""
                     - var _ domain.IUsecase = (*Usecase)(nil) // compile-time check
                     - ""
                     - type Usecase struct {
                 - name: uc_struct
                   type: 1
+                  data:
+                    - "\tcounterRepo domain.ICounterRepo"
                 - name: post_uc_struct
                   type: 0
                   data:
@@ -494,6 +637,8 @@ dirs:
                     - type Depends struct {
                 - name: deps
                   type: 1
+                  data:
+                    - "\tMemRepo domain.ICounterRepo"
                 - name: post_deps
                   type: 0
                   data:
@@ -503,6 +648,8 @@ dirs:
                     - "\treturn &Usecase{"
                 - name: new
                   type: 1
+                  data:
+                    - "\t\tcounterRepo: deps.MemRepo,"
                 - name: post_new
                   type: 0
                   data:
@@ -511,103 +658,49 @@ dirs:
     - name: pkg
       mode: 755
       dirs:
-        - name: grpcserver
+        - name: httpserver
           mode: 755
           files:
-            - name: grpc_server.go
+            - name: http_server.go
               mode: 644
               blocks:
                 - name: noblocks
                   type: 0
                   data:
-                    - package grpcserver
+                    - package httpserver
                     - ""
                     - import (
-                    - "\t\"net\""
+                    - "\t\"net/http\""
                     - ""
-                    - "\t\"google.golang.org/grpc\""
-                    - "\t\"google.golang.org/grpc/health\""
-                    - "\t\"google.golang.org/grpc/health/grpc_health_v1\""
-                    - "\t\"google.golang.org/grpc/reflection\""
+                    - "\t\"github.com/labstack/echo/v5\""
+                    - "\t\"github.com/labstack/echo/v5/middleware\""
                     - )
                     - ""
-                    - type addHandlerFunc func(s *grpc.Server)
-                    - ""
                     - type Server struct {
-                    - "\tlisten     string"
-                    - "\tsrv        *grpc.Server"
-                    - "\taddHandler addHandlerFunc"
-                    - "\topts       []grpc.ServerOption"
+                    - "\tSrv    *echo.Echo"
+                    - "\tlisten string"
                     - '}'
                     - ""
-                    - func New(listen string, addHandler addHandlerFunc, opts ...grpc.ServerOption) *Server {
-                    - "\tdefaultOpts := []grpc.ServerOption{"
-                    - "\t\tgrpc.ChainUnaryInterceptor(recoveryInterceptor()),"
-                    - "\t}"
-                    - "\tdefaultOpts = append(defaultOpts, opts...)"
+                    - func New(listen string, middlewares ...func(http.Handler) http.Handler) Server {
+                    - "\te := echo.New()"
+                    - "\te.Use(middleware.RequestLogger()) // use the RequestLogger middleware with slog logger"
+                    - "\te.Use(middleware.Recover())       // recover panics as errors for proper error handling"
                     - ""
-                    - "\treturn &Server{"
-                    - "\t\tlisten:     listen,"
-                    - "\t\taddHandler: addHandler,"
-                    - "\t\topts:       defaultOpts,"
+                    - "\treturn Server{"
+                    - "\t\tSrv:    e,"
+                    - "\t\tlisten: listen,"
                     - "\t}"
                     - '}'
                     - ""
                     - func (s *Server) Start() chan error {
-                    - "\ts.srv = grpc.NewServer(s.opts...)"
-                    - "\treflection.Register(s.srv)"
-                    - ""
-                    - "\thsrv := health.NewServer()"
-                    - "\tgrpc_health_v1.RegisterHealthServer(s.srv, hsrv)"
-                    - ""
-                    - "\ts.addHandler(s.srv)"
-                    - ""
                     - "\terrCh := make(chan error)"
-                    - ""
-                    - "\tlis, err := net.Listen(\"tcp\", s.listen)"
-                    - "\tif err != nil {"
-                    - "\t\tgo func() {"
-                    - "\t\t\terrCh <- err"
-                    - "\t\t}()"
-                    - ""
-                    - "\t\treturn errCh"
-                    - "\t}"
-                    - ""
                     - "\tgo func() {"
-                    - "\t\terrCh <- s.srv.Serve(lis)"
+                    - "\t\terrCh <- s.Srv.Start(s.listen)"
+                    - "\t\tclose(errCh)"
                     - "\t}()"
-                    - ""
                     - "\treturn errCh"
                     - '}'
                     - ""
                     - func (s *Server) Stop() {
-                    - "\ts.srv.GracefulStop()"
-                    - '}'
-            - name: interceptors.go
-              mode: 644
-              blocks:
-                - name: noblocks
-                  type: 0
-                  data:
-                    - package grpcserver
                     - ""
-                    - import (
-                    - "\t\"context\""
-                    - "\t\"log/slog\""
-                    - ""
-                    - "\t\"google.golang.org/grpc\""
-                    - "\t\"google.golang.org/grpc/codes\""
-                    - "\t\"google.golang.org/grpc/status\""
-                    - )
-                    - ""
-                    - func recoveryInterceptor() grpc.UnaryServerInterceptor {
-                    - "\treturn func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {"
-                    - "\t\tdefer func() {"
-                    - "\t\t\tif r := recover(); r != nil {"
-                    - "\t\t\t\tslog.Error(\"panic recovered\", \"method\", info.FullMethod, \"panic\", r)"
-                    - "\t\t\t\terr = status.Errorf(codes.Internal, \"internal error\")"
-                    - "\t\t\t}"
-                    - "\t\t}()"
-                    - "\t\treturn handler(ctx, req)"
-                    - "\t}"
                     - '}'

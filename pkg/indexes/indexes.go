@@ -1,15 +1,16 @@
-package projects
+package indexes
 
 import (
 	"embed"
 	"errors"
 	"strings"
 
-	"github.com/zlietapki/microboiler/internal/vfs"
 	"gopkg.in/yaml.v3"
+
+	"github.com/zlietapki/gena/internal/vfs"
 )
 
-var ErrNotFound = errors.New("project not found")
+var ErrNotFound = errors.New("index not found")
 
 //go:embed *.yml
 var YmlFiles embed.FS
@@ -39,13 +40,13 @@ func Names() []string {
 	return names
 }
 
-func GetByName(needName string) (*vfs.Directory, error) {
+func GetByName(name string) (*vfs.Directory, error) {
 	entries, _ := YmlFiles.ReadDir(".")
 	for _, e := range entries {
 		data, _ := YmlFiles.ReadFile(e.Name())
-		name := strings.TrimSuffix(e.Name(), ".yml")
+		curName := strings.TrimSuffix(e.Name(), ".yml")
 
-		if name == needName {
+		if curName == name {
 			var proj vfs.Directory
 			err := yaml.Unmarshal(data, &proj)
 			if err != nil {

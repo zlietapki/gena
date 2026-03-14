@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"github.com/zlietapki/microboiler/internal/vfs"
+	"github.com/zlietapki/gena/internal/vfs"
 )
 
 func MergeDirs(dirs ...vfs.Directory) vfs.Directory {

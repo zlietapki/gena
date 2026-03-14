@@ -1,4 +1,4 @@
-module github.com/zlietapki/microboiler
+module github.com/zlietapki/gena
 
 go 1.25.8
 

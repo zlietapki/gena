@@ -5,18 +5,21 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/zlietapki/microboiler/internal/check_ymls"
-	"github.com/zlietapki/microboiler/internal/fsindex"
-	"github.com/zlietapki/microboiler/internal/vfs"
 	"gopkg.in/yaml.v3"
+
+	"github.com/zlietapki/gena/internal/check_ymls"
+	"github.com/zlietapki/gena/internal/fsindex"
+	"github.com/zlietapki/gena/internal/vfs"
 )
+
+const indexOutput = "pkg/indexes"
 
 func main() {
 	args := getArgs()
 
-	outputFile := filepath.Join("pkg/projects", args.NameProject+".yml")
+	outputFile := filepath.Join(indexOutput, args.NameProject+".yml")
 
-	project, err := fsindex.GetDir(args.Src)
+	project, err := fsindex.IndexDir(args.Src)
 	if err != nil {
 		panic(err)
 	}

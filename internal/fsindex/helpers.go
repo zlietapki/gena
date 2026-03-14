@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/zlietapki/microboiler/internal/vfs"
+
+	"github.com/zlietapki/gena/internal/vfs"
 )
 
 func debug(msg string, args ...interface{}) {

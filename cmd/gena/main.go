@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zlietapki/microboiler/internal/generator"
-	"github.com/zlietapki/microboiler/internal/vfs"
-	"github.com/zlietapki/microboiler/pkg/projects"
+	"github.com/zlietapki/gena/internal/generator"
+	"github.com/zlietapki/gena/internal/vfs"
+	"github.com/zlietapki/gena/pkg/indexes"
 )
 
 func main() {
-	args, err := getArgs(projects.Names())
+	args, err := getArgs(indexes.Names())
 	if err != nil {
 		printError(err.Error())
 	}
@@ -24,7 +24,7 @@ func main() {
 
 	var selected []vfs.Directory
 	for _, opt := range args.Options {
-		proj, err := projects.GetByName(opt)
+		proj, err := indexes.GetByName(opt)
 		if err != nil {
 			printError(err.Error())
 		}

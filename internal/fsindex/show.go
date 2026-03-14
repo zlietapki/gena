@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/zlietapki/microboiler/internal/vfs"
+	"github.com/zlietapki/gena/internal/vfs"
 )
 
 func showDir(proj vfs.Directory) {

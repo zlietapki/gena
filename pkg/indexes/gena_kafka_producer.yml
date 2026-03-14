@@ -1,4 +1,4 @@
-name: microboiler_kafka_producer
+name: gena_kafka_producer
 mode: 755
 files:
     - name: .env
@@ -273,7 +273,7 @@ files:
         - name: module
           type: 0
           data:
-            - module github.com/zlietapki/boilerplate
+            - module github.com/zlietapki/gena
         - name: go_ver
           type: 0
           data:
@@ -332,9 +332,9 @@ dirs:
                     - "\t\"log/slog\""
                     - "\t\"os\""
                     - ""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/config\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/kafka\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/usecase\""
+                    - "\t\"github.com/zlietapki/gena/internal/config\""
+                    - "\t\"github.com/zlietapki/gena/internal/kafka\""
+                    - "\t\"github.com/zlietapki/gena/internal/usecase\""
                     - )
                     - ""
                 - name: main
@@ -410,7 +410,7 @@ dirs:
                     - ""
                     - "\t\"github.com/joho/godotenv\""
                     - "\t\"github.com/kelseyhightower/envconfig\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/kafka\""
+                    - "\t\"github.com/zlietapki/gena/internal/kafka\""
                     - )
                     - ""
                 - name: post_import
@@ -619,7 +619,7 @@ dirs:
                     - "\t\"sync\""
                     - ""
                     - "\t\"github.com/twmb/franz-go/pkg/kgo\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
+                    - "\t\"github.com/zlietapki/gena/internal/domain\""
                     - )
                     - ""
                     - type Producer struct {
@@ -671,7 +671,7 @@ dirs:
                     - "\t\"fmt\""
                     - ""
                     - "\t\"github.com/twmb/franz-go/pkg/kgo\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
+                    - "\t\"github.com/zlietapki/gena/internal/domain\""
                     - )
                     - ""
                     - func toKgoRecord(e domain.Event) (*kgo.Record, error) {
@@ -700,7 +700,7 @@ dirs:
                     - "\t\"context\""
                     - "\t\"time\""
                     - ""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
+                    - "\t\"github.com/zlietapki/gena/internal/domain\""
                     - )
                     - ""
                     - func (u Usecase) Example(ctx context.Context) error {
@@ -725,7 +725,7 @@ dirs:
                   data:
                     - package usecase
                     - ""
-                    - import "github.com/zlietapki/boilerplate/internal/domain"
+                    - import "github.com/zlietapki/gena/internal/domain"
                     - ""
                     - var _ domain.IUsecase = (*Usecase)(nil) // compile-time check
                     - ""

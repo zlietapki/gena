@@ -8,14 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zlietapki/microboiler/internal/vfs"
+	"github.com/zlietapki/gena/internal/vfs"
 )
 
 var Debug = false
 
 const defaultBlockName = "noblocks"
 
-func GetDir(path string) (*vfs.Directory, error) {
+func IndexDir(path string) (*vfs.Directory, error) {
 	mode, err := getMode(path)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func GetDir(path string) (*vfs.Directory, error) {
 				continue
 			}
 
-			sub, err := GetDir(filePath)
+			sub, err := IndexDir(filePath)
 			if err != nil {
 				return nil, err
 			}
@@ -58,7 +58,7 @@ func GetDir(path string) (*vfs.Directory, error) {
 				continue
 			}
 
-			file, err := getFile(filePath)
+			file, err := indexFile(filePath)
 			if err != nil {
 				return nil, err
 			}
@@ -70,13 +70,13 @@ func GetDir(path string) (*vfs.Directory, error) {
 	return &dir, nil
 }
 
-func getFile(path string) (*vfs.File, error) {
+func indexFile(path string) (*vfs.File, error) {
 	mode, err := getMode(path)
 	if err != nil {
 		return nil, err
 	}
 
-	blocks, err := getBlocks(path)
+	blocks, err := indexBlocks(path)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func getFile(path string) (*vfs.File, error) {
 	}, nil
 }
 
-func getBlocks(path string) ([]vfs.Block, error) {
+func indexBlocks(path string) ([]vfs.Block, error) {
 	filename := filepath.Base(path)
 	ext := filepath.Ext(filename)
 
