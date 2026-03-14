@@ -1,26 +1,30 @@
 name: microboiler_grpc_server
+mode: 755
 files:
     - name: .env
+      mode: 644
       blocks:
-        - name: vars
-          type: 1
-          data:
-            - GRPC_LISTEN=:8888
         - name: common
           type: 0
           data:
             - ENV=local
+        - name: vars
+          type: 1
+          data:
+            - GRPC_LISTEN=:8888
     - name: .env.example
+      mode: 644
       blocks:
-        - name: vars
-          type: 1
-          data:
-            - GRPC_LISTEN=:8888
         - name: common
           type: 0
           data:
             - ENV=local
+        - name: vars
+          type: 1
+          data:
+            - GRPC_LISTEN=:8888
     - name: .gitignore
+      mode: 644
       blocks:
         - name: common
           type: 2
@@ -31,8 +35,9 @@ files:
             - bin/
             - .env
     - name: Dockerfile
+      mode: 644
       blocks:
-        - name: all
+        - name: common
           type: 0
           data:
             - '# Builder stage'
@@ -55,15 +60,15 @@ files:
             - WORKDIR /app
             - ""
             - COPY --from=builder /app/server .
-            - COPY .env .env
             - ""
             - CMD ["./server"]
             - ""
         - name: expose
-          type: 1
+          type: 2
           data:
             - EXPOSE 8888
     - name: README.md
+      mode: 644
       blocks:
         - name: common
           type: 0
@@ -141,6 +146,7 @@ files:
             - EOM
             - '```'
     - name: Taskfile.yml
+      mode: 644
       blocks:
         - name: common
           type: 0
@@ -172,7 +178,8 @@ files:
             - '    cmds:'
             - '      - go fmt ./...'
             - '      - go vet ./...'
-    - name: docker-compose.yml
+    - name: docker-compose-server.yml
+      mode: 644
       blocks:
         - name: common
           type: 0
@@ -182,7 +189,7 @@ files:
             - '    build: .'
             - '    ports:'
         - name: ports
-          type: 1
+          type: 2
           data:
             - '      - "8888:8888"'
         - name: post_ports
@@ -191,29 +198,34 @@ files:
             - '    env_file:'
             - '      - .env'
     - name: go.mod
+      mode: 644
       blocks:
-        - name: gomod
+        - name: module
           type: 0
           data:
             - module github.com/zlietapki/boilerplate
-            - ""
+        - name: go_ver
+          type: 0
+          data:
             - go 1.26.1
-            - ""
-        - name: deps
+        - name: require
           type: 2
           data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
+            - "\tgithub.com/kelseyhightower/envconfig v1.4.0"
             - "\tgithub.com/zlietapki/microboiler_api_contracts v0.0.2"
             - "\tgoogle.golang.org/grpc v1.79.2"
             - )
 dirs:
     - name: cmd
-      files: []
+      mode: 755
       dirs:
         - name: server
+          mode: 755
           files:
             - name: main.go
+              mode: 644
               blocks:
                 - name: top
                   type: 0
@@ -231,7 +243,6 @@ dirs:
                     - ""
                     - "\t\"github.com/zlietapki/boilerplate/internal/config\""
                     - "\t\"github.com/zlietapki/boilerplate/internal/grpc_handler\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/repository\""
                     - "\t\"github.com/zlietapki/boilerplate/internal/usecase\""
                     - "\t\"github.com/zlietapki/boilerplate/pkg/grpcserver\""
                     - "\t\"github.com/zlietapki/microboiler_api_contracts/pkg/pb/v1\""
@@ -244,10 +255,22 @@ dirs:
                     - func main() {
                     - "\tcfg := config.New()"
                     - ""
-                    - "\trepo := repository.New()"
-                    - "\tuc := usecase.New(repo)"
+                - name: usecase_deps
+                  type: 1
+                  data:
                     - ""
-                - name: handler
+                - name: new_usecase
+                  type: 0
+                  data:
+                    - "\tuc := usecase.New(usecase.Depends{"
+                - name: usecase_deps_objs
+                  type: 1
+                - name: post_usecase_deps_objs
+                  type: 0
+                  data:
+                    - "\t})"
+                    - ""
+                - name: after_usecase
                   type: 1
                   data:
                     - "\tgrpcHandler := grpc_handler.New(uc)"
@@ -269,72 +292,75 @@ dirs:
                     - "\tselect {"
                     - "\tcase <-signals:"
                     - ""
-                - name: signals_handler
+                - name: signals_select
                   type: 1
                   data:
                     - "\tcase err := <-grpcServerErrCh:"
                     - "\t\tpanic(\"gRPC server:\" + err.Error())"
-                - name: bottom
+                - name: post_signals_select
                   type: 0
                   data:
                     - "\t}"
+                - name: bottom
+                  type: 0
+                  data:
                     - '}'
-          dirs: []
     - name: internal
-      files: []
+      mode: 755
       dirs:
         - name: config
+          mode: 755
           files:
             - name: config.go
+              mode: 644
               blocks:
                 - name: top
                   type: 0
                   data:
                     - package config
                     - ""
+                - name: import
+                  type: 2
+                  data:
                     - import (
+                    - "\t\"log/slog\""
                     - "\t\"os\""
                     - ""
                     - "\t\"github.com/joho/godotenv\""
+                    - "\t\"github.com/kelseyhightower/envconfig\""
                     - )
                     - ""
-                    - type Config struct {
-                - name: struct
-                  type: 1
-                  data:
-                    - "\tGRPCListen string"
-                - name: body
+                - name: post_import
                   type: 0
                   data:
-                    - "\tEnv string"
+                    - type Config struct {
+                    - "\tEnv string `envconfig:\"ENV\"`"
+                - name: conf
+                  type: 1
+                  data:
+                    - "\tGRPCListen string `envconfig:\"GRPC_LISTEN\"`"
+                - name: rest
+                  type: 0
+                  data:
                     - '}'
                     - ""
-                    - func New() *Config {
+                    - func New() Config {
                     - "\tgodotenv.Load()"
                     - ""
-                    - "\treturn &Config{"
-                - name: return
-                  type: 1
-                  data:
-                    - "\t\tGRPCListen: getEnv(\"GRPC_LISTEN\", \":8888\"),"
-                - name: post_return
-                  type: 0
-                  data:
-                    - "\t\tEnv: getEnv(\"ENV\", \"local\"),"
-                    - "\t}"
-                    - '}'
-                    - ""
-                    - func getEnv(key, fallback string) string {
-                    - "\tif v := os.Getenv(key); v != \"\" {"
-                    - "\t\treturn v"
+                    - "\tvar cfg Config"
+                    - "\terr := envconfig.Process(\"\", &cfg)"
+                    - "\tif err != nil {"
+                    - "\t\tslog.Error(\"config parse failed\", \"err\", err)"
+                    - "\t\tos.Exit(1)"
                     - "\t}"
                     - ""
-                    - "\treturn fallback"
+                    - "\treturn cfg"
                     - '}'
-          dirs: []
         - name: domain
+          mode: 755
           files:
             - name: errors.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -347,22 +373,8 @@ dirs:
                     - "\tErrNotFound = errors.New(\"not found\")"
                     - "\tErrConflict = errors.New(\"conflict\")"
                     - )
-            - name: repository.go
-              blocks:
-                - name: all
-                  type: 0
-                  data:
-                    - package domain
-                    - ""
-                    - type IRepository interface {
-                - name: repo_methods
-                  type: 1
-                  data: []
-                - name: post_repo_methods
-                  type: 0
-                  data:
-                    - '}'
             - name: usecase.go
+              mode: 644
               blocks:
                 - name: top
                   type: 0
@@ -372,7 +384,9 @@ dirs:
                 - name: imports
                   type: 2
                   data:
-                    - import "context"
+                    - import (
+                    - "\t\"context\""
+                    - )
                     - ""
                 - name: usecase
                   type: 0
@@ -386,10 +400,11 @@ dirs:
                   type: 0
                   data:
                     - '}'
-          dirs: []
         - name: grpc_handler
+          mode: 755
           files:
             - name: grpc_handler.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -412,6 +427,7 @@ dirs:
                     - "\t}"
                     - '}'
             - name: m_hello.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -434,50 +450,11 @@ dirs:
                     - "\t\tHello: resp,"
                     - "\t}, nil"
                     - '}'
-          dirs: []
-        - name: repository
-          files:
-            - name: repo.go
-              blocks:
-                - name: top
-                  type: 0
-                  data:
-                    - package repository
-                    - ""
-                - name: imports
-                  type: 2
-                  data:
-                    - import "github.com/zlietapki/boilerplate/internal/domain"
-                    - ""
-                - name: post_imports
-                  type: 0
-                  data:
-                    - ""
-                    - var _ domain.IRepository = (*Repo)(nil) // compile-time check
-                    - ""
-                    - type Repo struct {
-                - name: repo_struct
-                  type: 2
-                  data: []
-                - name: post_repo_struct
-                  type: 0
-                  data:
-                    - '}'
-                    - ""
-                    - func New() *Repo {
-                    - "\treturn &Repo{"
-                - name: repo_init
-                  type: 2
-                  data: []
-                - name: post_repo_init
-                  type: 0
-                  data:
-                    - "\t}"
-                    - '}'
-          dirs: []
         - name: usecase
+          mode: 755
           files:
             - name: m_hello.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -495,8 +472,9 @@ dirs:
                     - "\treturn res, nil"
                     - '}'
             - name: uc.go
+              mode: 644
               blocks:
-                - name: noblocks
+                - name: top
                   type: 0
                   data:
                     - package usecase
@@ -506,21 +484,38 @@ dirs:
                     - var _ domain.IUsecase = (*Usecase)(nil) // compile-time check
                     - ""
                     - type Usecase struct {
-                    - "\trepo domain.IRepository"
+                - name: uc_struct
+                  type: 1
+                - name: post_uc_struct
+                  type: 0
+                  data:
                     - '}'
                     - ""
-                    - func New(repo domain.IRepository) *Usecase {
+                    - type Depends struct {
+                - name: deps
+                  type: 1
+                - name: post_deps
+                  type: 0
+                  data:
+                    - '}'
+                    - ""
+                    - func New(deps Depends) *Usecase {
                     - "\treturn &Usecase{"
-                    - "\t\trepo: repo,"
+                - name: new
+                  type: 1
+                - name: post_new
+                  type: 0
+                  data:
                     - "\t}"
                     - '}'
-          dirs: []
     - name: pkg
-      files: []
+      mode: 755
       dirs:
         - name: grpcserver
+          mode: 755
           files:
             - name: grpc_server.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -589,6 +584,7 @@ dirs:
                     - "\ts.srv.GracefulStop()"
                     - '}'
             - name: interceptors.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -615,4 +611,3 @@ dirs:
                     - "\t\treturn handler(ctx, req)"
                     - "\t}"
                     - '}'
-          dirs: []

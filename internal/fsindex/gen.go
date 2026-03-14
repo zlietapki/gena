@@ -1,4 +1,4 @@
-package generate
+package fsindex
 
 import (
 	"bufio"
@@ -16,8 +16,14 @@ var Debug = false
 const defaultBlockName = "noblocks"
 
 func GetDir(path string) (*vfs.Directory, error) {
+	mode, err := getMode(path)
+	if err != nil {
+		return nil, err
+	}
+
 	dir := vfs.Directory{
 		Name: filepath.Base(path),
+		Mode: mode,
 	}
 
 	debug("ReadDir: %s\n", path)
@@ -65,6 +71,11 @@ func GetDir(path string) (*vfs.Directory, error) {
 }
 
 func getFile(path string) (*vfs.File, error) {
+	mode, err := getMode(path)
+	if err != nil {
+		return nil, err
+	}
+
 	blocks, err := getBlocks(path)
 	if err != nil {
 		return nil, err
@@ -72,6 +83,7 @@ func getFile(path string) (*vfs.File, error) {
 
 	return &vfs.File{
 		Name:   filepath.Base(path),
+		Mode:   mode,
 		Blocks: blocks,
 	}, nil
 }
@@ -79,6 +91,10 @@ func getFile(path string) (*vfs.File, error) {
 func getBlocks(path string) ([]vfs.Block, error) {
 	filename := filepath.Base(path)
 	ext := filepath.Ext(filename)
+
+	if filename == "go.mod" {
+		return getGoModBlocks(path)
+	}
 
 	f, err := os.Open(path)
 	if err != nil {

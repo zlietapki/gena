@@ -1,6 +1,26 @@
 package vfs
 
+import (
+	"os"
+	"strconv"
+
+	"gopkg.in/yaml.v3"
+)
+
 type BlockType int
+
+type OctalMode os.FileMode
+
+func (o OctalMode) String() string {
+	return strconv.FormatUint(uint64(o), 8)
+}
+
+func (o OctalMode) MarshalYAML() (interface{}, error) {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Value: o.String(),
+	}, nil
+}
 
 const (
 	BlockTypeSingle BlockType = iota
@@ -10,17 +30,19 @@ const (
 
 type Directory struct {
 	Name  string
-	Files []File
-	Dirs  []Directory
+	Mode  OctalMode
+	Files []File      `yaml:",omitempty"`
+	Dirs  []Directory `yaml:",omitempty"`
 }
 
 type File struct {
 	Name   string
-	Blocks []Block
+	Mode   OctalMode
+	Blocks []Block `yaml:",omitempty"`
 }
 
 type Block struct {
 	Name string
 	Type BlockType
-	Data []string
+	Data []string `yaml:",omitempty"`
 }

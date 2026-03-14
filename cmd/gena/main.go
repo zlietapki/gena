@@ -5,8 +5,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
-	"github.com/zlietapki/microboiler/internal/merge"
+	"github.com/zlietapki/microboiler/internal/generator"
 	"github.com/zlietapki/microboiler/internal/vfs"
 	"github.com/zlietapki/microboiler/pkg/projects"
 )
@@ -31,7 +32,7 @@ func main() {
 		selected = append(selected, *proj)
 	}
 
-	result := merge.MergeDirs(selected...)
+	result := generator.MergeDirs(selected...)
 	result.Name = args.ProjectName
 
 	err = createFileSystem(result, args.Output)
@@ -39,16 +40,23 @@ func main() {
 		printError("Error on write project: %v\n", err)
 	}
 
-	resultFolder := filepath.Join(args.Output, args.ProjectName)
-	fmt.Printf("Project boilerplate generated %s\n", resultFolder)
+	outputDir := filepath.Join(args.Output, args.ProjectName)
+	fmt.Printf("Project boilerplate generated %s\n", outputDir)
 
-	fmt.Printf("Running 'go mod tidy'\n")
-	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Dir = resultFolder
+	// format code
+	runCmd(outputDir, "go mod tidy")
+	runCmd(outputDir, "go fmt ./...")
+	runCmd(outputDir, "goimports -w -local github.com/zlietapki/boilerplate .")
+}
+
+func runCmd(currentDir string, command string) {
+	args := strings.Split(command, " ")
+
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Dir = currentDir
 	if out, err := cmd.CombinedOutput(); err != nil {
-		printError("Error running go mod tidy: %s %v", out, err)
+		printError("Error running %s: %s %v", command, out, err)
 	}
-	fmt.Printf("Done\n")
 }
 
 func printError(msg string, args ...interface{}) {

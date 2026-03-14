@@ -1,4 +1,4 @@
-package merge
+package generator
 
 import (
 	"github.com/zlietapki/microboiler/internal/vfs"
@@ -17,6 +17,8 @@ func MergeDirs(dirs ...vfs.Directory) vfs.Directory {
 			Files: addFiles(result.Files, d.Files),
 		}
 	}
+
+	//fmt.Printf("111333 result %v\n", result)
 	return result
 }
 
@@ -49,10 +51,10 @@ func addDirs(dirsA []vfs.Directory, dirsB []vfs.Directory) []vfs.Directory {
 
 func addFiles(filesA, filesB []vfs.File) []vfs.File {
 	fileByName := map[string]vfs.File{}
-	var orderedNames []string
+	var orderedFileNames []string
 
 	for _, fileA := range filesA {
-		orderedNames = append(orderedNames, fileA.Name)
+		orderedFileNames = append(orderedFileNames, fileA.Name)
 		fileByName[fileA.Name] = fileA
 	}
 
@@ -63,44 +65,55 @@ func addFiles(filesA, filesB []vfs.File) []vfs.File {
 				Blocks: addBlocks(fileA.Blocks, fileB.Blocks),
 			}
 		} else {
-			orderedNames = append(orderedNames, fileB.Name)
+			orderedFileNames = append(orderedFileNames, fileB.Name)
 			fileByName[fileB.Name] = fileB
 		}
 	}
 
-	result := make([]vfs.File, 0, len(orderedNames))
+	result := make([]vfs.File, 0, len(orderedFileNames))
 
-	for _, name := range orderedNames {
+	for _, name := range orderedFileNames {
 		result = append(result, fileByName[name])
 	}
 
+	//fmt.Printf("11111 result: %v\n", result)
 	return result
 }
 
 func addBlocks(blocksA, blocksB []vfs.Block) []vfs.Block {
 	blockByName := map[string]vfs.Block{}
-	var orderedNames []string
+	var orderedBlockNames []string
 
 	for _, blockA := range blocksA {
-		orderedNames = append(orderedNames, blockA.Name)
+		orderedBlockNames = append(orderedBlockNames, blockA.Name)
 		blockByName[blockA.Name] = blockA
 	}
 
 	for _, blockB := range blocksB {
 		if blockA, ok := blockByName[blockB.Name]; ok {
 			blockByName[blockB.Name] = mergeBlocks(blockA, blockB)
+
+			// FIXME remove
+			//fmt.Printf("#### result blockB.Name %s\n", blockB.Name)
+			//asd := blockByName[blockB.Name]
+			//for _, v := range asd.Data {
+			//	fmt.Printf("%s\n", v)
+			//}
 		} else {
-			orderedNames = append(orderedNames, blockB.Name)
+			orderedBlockNames = append(orderedBlockNames, blockB.Name)
 			blockByName[blockB.Name] = blockB
 		}
 	}
 
-	result := make([]vfs.Block, 0, len(orderedNames))
+	result := make([]vfs.Block, 0, len(orderedBlockNames))
 
-	for _, name := range orderedNames {
+	for _, name := range orderedBlockNames {
+		//fmt.Printf("adding block %s\n", name)
+		//fmt.Printf("#### result block.Name %s\n", blockByName[name].Data)
 		result = append(result, blockByName[name])
 	}
 
+	//fmt.Printf("#### result  %s\n", result)
 	return result
 }
 

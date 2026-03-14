@@ -1,0 +1,762 @@
+name: microboiler_kafka_producer
+mode: 755
+files:
+    - name: .env
+      mode: 644
+      blocks:
+        - name: common
+          type: 0
+          data:
+            - ENV=local
+        - name: vars
+          type: 1
+          data:
+            - KAFKA_BROKERS=127.0.0.1:19092
+            - KAFKA_USER=superuser
+            - KAFKA_PASSWORD=secretpassword
+            - KAFKA_SASL_MECHANISM=SCRAM-SHA-256
+            - KAFKA_TOPIC=example-topic
+            - KAFKA_STOP_TIMEOUT=5s
+    - name: .env.example
+      mode: 644
+      blocks:
+        - name: common
+          type: 0
+          data:
+            - ENV=local
+        - name: vars
+          type: 1
+          data:
+            - KAFKA_BROKERS=127.0.0.1:19092
+            - KAFKA_USER=superuser
+            - KAFKA_PASSWORD=secretpassword
+            - KAFKA_SASL_MECHANISM=SCRAM-SHA-256
+            - KAFKA_TOPIC=example-topic
+            - KAFKA_STOP_TIMEOUT=5s
+    - name: .gitignore
+      mode: 644
+      blocks:
+        - name: common
+          type: 2
+          data:
+            - .idea/
+            - .claude/
+            - .task/
+            - bin/
+            - .env
+    - name: Dockerfile
+      mode: 644
+      blocks:
+        - name: common
+          type: 0
+          data:
+            - '# Builder stage'
+            - FROM golang:1.26.1-alpine3.23 AS builder
+            - ""
+            - WORKDIR /app
+            - ""
+            - COPY go.mod go.sum ./
+            - RUN go mod download
+            - ""
+            - COPY . .
+            - ""
+            - RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
+            - ""
+            - '# Runtime stage'
+            - FROM alpine:3.23
+            - ""
+            - RUN apk --no-cache add ca-certificates
+            - ""
+            - WORKDIR /app
+            - ""
+            - COPY --from=builder /app/server .
+            - ""
+            - CMD ["./server"]
+            - ""
+    - name: README.md
+      mode: 644
+      blocks:
+        - name: noblocks
+          type: 0
+          data:
+            - microboiler
+            - ===========
+            - ""
+            - 'RedPanda Console <http://localhost:8081/>  '
+            - ""
+            - Configure rpk
+            - ""
+            - '```shell'
+            - rpk profile create single-node --from-profile rpk-profile-single.yaml
+            - '```'
+            - ""
+            - '### Example requests'
+            - ""
+            - '```bash'
+            - ""
+            - '```'
+    - name: Taskfile.yml
+      mode: 644
+      blocks:
+        - name: common
+          type: 0
+          data:
+            - 'version: ''3'''
+            - ""
+            - 'tasks:'
+            - '  default:'
+            - '    cmds:'
+            - '      - task: build'
+            - ""
+            - '  build:'
+            - '    desc: Build project'
+            - '    cmds:'
+            - '      - go build -o bin/server ./cmd/server'
+            - ""
+            - '  run:'
+            - '    desc: Run project'
+            - '    cmds:'
+            - '      - go run ./cmd/server'
+            - ""
+            - '  test:'
+            - '    desc: Run tests'
+            - '    cmds:'
+            - '      - go test ./...'
+            - ""
+            - '  lint:'
+            - '    desc: Run linter'
+            - '    cmds:'
+            - '      - go fmt ./...'
+            - '      - go vet ./...'
+    - name: docker-compose-server.yml
+      mode: 644
+      blocks:
+        - name: common
+          type: 0
+          data:
+            - 'services:'
+            - '  server:'
+            - '    build: .'
+            - '    ports:'
+        - name: ports
+          type: 2
+          data:
+            - '      - "8080:8080"'
+        - name: post_ports
+          type: 0
+          data:
+            - '    env_file:'
+            - '      - .env'
+    - name: docker-compose.yml
+      mode: 644
+      blocks:
+        - name: common
+          type: 0
+          data:
+            - 'services:'
+        - name: redpanda
+          type: 0
+          data:
+            - '  redpanda-0:'
+            - '    image: redpandadata/redpanda:v25.3.10'
+            - '    container_name: redpanda-0'
+            - '    command:'
+            - '      - redpanda'
+            - '      - start'
+            - '      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092'
+            - '      - --advertise-kafka-addr internal://redpanda-0:9092,external://localhost:19092'
+            - '      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082'
+            - '      - --advertise-pandaproxy-addr internal://redpanda-0:8082,external://localhost:18082'
+            - '      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081'
+            - '      - --rpc-addr redpanda-0:33145'
+            - '      - --advertise-rpc-addr redpanda-0:33145'
+            - '      - --mode dev-container'
+            - '      - --smp 1'
+            - '      - --default-log-level=info'
+            - '    environment:'
+            - '      RP_BOOTSTRAP_USER: "superuser:secretpassword"'
+            - '    volumes:'
+            - '      - redpanda-0:/var/lib/redpanda/data'
+            - '    configs:'
+            - '      - source: bootstrap'
+            - '        target: /etc/redpanda/.bootstrap.yaml'
+            - '    networks:'
+            - '      - redpanda_network'
+            - '    ports:'
+            - '      - 18081:18081'
+            - '      - 18082:18082'
+            - '      - 19092:19092'
+            - '      - 19644:9644'
+            - '    healthcheck:'
+            - '      test: [ "CMD", "rpk", "cluster", "info", "-X", "user=superuser", "-X", "pass=secretpassword" ]'
+            - '      interval: 5s'
+            - '      timeout: 15s'
+            - '      retries: 5'
+            - ""
+            - '  createtopic:'
+            - '    image: redpandadata/redpanda:v25.3.10'
+            - '    command:'
+            - '      - topic'
+            - '      - create'
+            - '      - example-topic'
+            - '      - -X user=superuser'
+            - '      - -X pass=secretpassword'
+            - '      - -X brokers=redpanda-0:9092'
+            - '    networks:'
+            - '      - redpanda_network'
+            - '    depends_on:'
+            - '      redpanda-0:'
+            - '        condition: service_healthy'
+            - ""
+            - '  console:'
+            - '    image: redpandadata/console:v3.6.0'
+            - '    container_name: redpanda-console'
+            - '    networks:'
+            - '      - redpanda_network'
+            - '    entrypoint: /bin/sh'
+            - '    command: -c ''echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml && /app/console'''
+            - '    environment:'
+            - '      CONFIG_FILEPATH: /tmp/config.yml'
+            - '      CONSOLE_CONFIG_FILE: |'
+            - '        kafka:'
+            - '          brokers: ["redpanda-0:9092"]'
+            - '          sasl:'
+            - '            enabled: true'
+            - '            impersonateUser: true'
+            - '        schemaRegistry:'
+            - '          enabled: true'
+            - '          urls: ["http://redpanda-0:8081"]'
+            - '          authentication:'
+            - '            impersonateUser: true'
+            - '        redpanda:'
+            - '          adminApi:'
+            - '            enabled: true'
+            - '            urls: ["http://redpanda-0:9644"]'
+            - '            authentication:'
+            - '              basic:'
+            - '                username: superuser'
+            - '                password: secretpassword'
+            - '              impersonateUser: false'
+            - '        authentication:'
+            - '          jwtSigningKey: vazxnT+ZHtxKslK6QlDGovcYnSjTk/lKMmZ+mHrBVE+YdVDkLgSuP6AszAKe9Gvq'
+            - '          basic:'
+            - '            enabled: true'
+            - '        authorization:'
+            - '          roleBindings:'
+            - '          - roleName: admin'
+            - '            users:'
+            - '              - loginType: basic'
+            - '                name: superuser'
+            - '        analytics:'
+            - '          enabled: false'
+            - '    ports:'
+            - '      - 8081:8080'
+            - '    depends_on:'
+            - '      redpanda-0:'
+            - '        condition: service_healthy'
+            - ""
+            - 'networks:'
+            - '  redpanda_network:'
+            - '    driver: bridge'
+            - 'volumes:'
+            - '  redpanda-0: null'
+            - 'configs:'
+            - '  bootstrap:'
+            - '    content: |'
+            - '      admin_api_require_auth: true'
+            - '      superusers:'
+            - '        - superuser'
+            - '      enable_sasl: true'
+    - name: go.mod
+      mode: 644
+      blocks:
+        - name: module
+          type: 0
+          data:
+            - module github.com/zlietapki/boilerplate
+        - name: go_ver
+          type: 0
+          data:
+            - go 1.26.1
+        - name: require
+          type: 2
+          data:
+            - require (
+            - "\tgithub.com/joho/godotenv v1.5.1"
+            - "\tgithub.com/kelseyhightower/envconfig v1.4.0"
+            - "\tgithub.com/twmb/franz-go v1.20.7"
+            - )
+    - name: rpk-profile.yml
+      mode: 644
+      blocks:
+        - name: noblocks
+          type: 0
+          data:
+            - 'kafka_api:'
+            - '  sasl:'
+            - '    user: superuser # The username used for authentication'
+            - '    password: secretpassword # The password associated with the username'
+            - '    mechanism: scram-sha-256 # Authentication mechanism; SCRAM-SHA-256 provides secure password-based authentication'
+            - '  brokers:'
+            - '    - 127.0.0.1:19092 # Broker 1: Accessible on localhost, port 19092'
+            - ""
+            - 'admin_api:'
+            - '  addresses:'
+            - '    - 127.0.0.1:19644 # Admin API for Broker 1: Accessible on localhost, port 19644'
+            - ""
+            - 'schema_registry:'
+            - '  addresses:'
+            - '    - 127.0.0.1:18081 # Schema Registry API for Broker 1: Accessible on localhost, port 18081'
+dirs:
+    - name: bin
+      mode: 755
+    - name: cmd
+      mode: 755
+      dirs:
+        - name: server
+          mode: 755
+          files:
+            - name: main.go
+              mode: 644
+              blocks:
+                - name: top
+                  type: 0
+                  data:
+                    - package main
+                    - ""
+                - name: imports
+                  type: 2
+                  data:
+                    - import (
+                    - "\t\"context\""
+                    - "\t\"log/slog\""
+                    - "\t\"os\""
+                    - ""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/config\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/kafka\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/usecase\""
+                    - )
+                    - ""
+                - name: main
+                  type: 0
+                  data:
+                    - func main() {
+                    - "\tcfg := config.New()"
+                    - ""
+                - name: usecase_deps
+                  type: 1
+                  data:
+                    - "\tkafkaClient, err := kafka.NewClient(cfg.Kafka)"
+                    - "\tif err != nil {"
+                    - "\t\tslog.Error(\"kafka init failed\", \"err\", err)"
+                    - "\t\tos.Exit(1)"
+                    - "\t}"
+                    - "\tdefer func() {"
+                    - "\t\terr = kafkaClient.Stop()"
+                    - "\t\tif err != nil {"
+                    - "\t\t\tslog.Error(\"kafka client stop failed\", \"err\", err)"
+                    - "\t\t}"
+                    - "\t}()"
+                    - ""
+                    - "\tproducer := kafka.NewProducer(kafkaClient.Kgo())"
+                    - ""
+                - name: new_usecase
+                  type: 0
+                  data:
+                    - "\tuc := usecase.New(usecase.Depends{"
+                - name: usecase_deps_objs
+                  type: 1
+                  data:
+                    - "\t\tEventPublisher: producer,"
+                - name: post_usecase_deps_objs
+                  type: 0
+                  data:
+                    - "\t})"
+                    - ""
+                - name: after_usecase
+                  type: 1
+                  data:
+                    - "\tctx := context.Background()"
+                    - ""
+                    - "\tif err = uc.Example(ctx); err != nil {"
+                    - "\t\tslog.Error(\"usecase failed\", \"err\", err)"
+                    - "\t\tos.Exit(1)"
+                    - "\t}"
+                    - ""
+                - name: bottom
+                  type: 0
+                  data:
+                    - '}'
+    - name: internal
+      mode: 755
+      dirs:
+        - name: config
+          mode: 755
+          files:
+            - name: config.go
+              mode: 644
+              blocks:
+                - name: top
+                  type: 0
+                  data:
+                    - package config
+                    - ""
+                - name: import
+                  type: 2
+                  data:
+                    - import (
+                    - "\t\"log/slog\""
+                    - "\t\"os\""
+                    - ""
+                    - "\t\"github.com/joho/godotenv\""
+                    - "\t\"github.com/kelseyhightower/envconfig\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/kafka\""
+                    - )
+                    - ""
+                - name: post_import
+                  type: 0
+                  data:
+                    - type Config struct {
+                    - "\tEnv string `envconfig:\"ENV\"`"
+                - name: conf
+                  type: 1
+                  data:
+                    - "\tKafka kafka.Config"
+                - name: rest
+                  type: 0
+                  data:
+                    - '}'
+                    - ""
+                    - func New() Config {
+                    - "\tgodotenv.Load()"
+                    - ""
+                    - "\tvar cfg Config"
+                    - "\terr := envconfig.Process(\"\", &cfg)"
+                    - "\tif err != nil {"
+                    - "\t\tslog.Error(\"config parse failed\", \"err\", err)"
+                    - "\t\tos.Exit(1)"
+                    - "\t}"
+                    - ""
+                    - "\treturn cfg"
+                    - '}'
+        - name: domain
+          mode: 755
+          files:
+            - name: event.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package domain
+                    - ""
+                    - import "time"
+                    - ""
+                    - type Event struct {
+                    - "\tKey       string"
+                    - "\tPayload   any"
+                    - "\tTimestamp time.Time"
+                    - '}'
+            - name: event_publisher.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package domain
+                    - ""
+                    - import "context"
+                    - ""
+                    - type IEventPublisher interface {
+                    - "\tPublish(ctx context.Context, events []Event) error"
+                    - '}'
+            - name: usecase.go
+              mode: 644
+              blocks:
+                - name: top
+                  type: 0
+                  data:
+                    - package domain
+                    - ""
+                - name: imports
+                  type: 2
+                  data:
+                    - import (
+                    - "\t\"context\""
+                    - )
+                    - ""
+                - name: usecase
+                  type: 0
+                  data:
+                    - type IUsecase interface {
+                - name: methods
+                  type: 2
+                  data:
+                    - "\tExample(ctx context.Context) error"
+                - name: post_methods
+                  type: 0
+                  data:
+                    - '}'
+        - name: kafka
+          mode: 755
+          files:
+            - name: client.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package kafka
+                    - ""
+                    - import (
+                    - "\t\"context\""
+                    - "\t\"fmt\""
+                    - "\t\"time\""
+                    - ""
+                    - "\t\"github.com/twmb/franz-go/pkg/kgo\""
+                    - "\t\"github.com/twmb/franz-go/pkg/sasl/scram\""
+                    - )
+                    - ""
+                    - type Client struct {
+                    - "\tkgoClient   *kgo.Client"
+                    - "\tstopTimeout time.Duration"
+                    - '}'
+                    - ""
+                    - func (c Client) Kgo() *kgo.Client {
+                    - "\treturn c.kgoClient"
+                    - '}'
+                    - ""
+                    - func NewClient(cfg Config) (*Client, error) {
+                    - "\topts := []kgo.Opt{"
+                    - "\t\tkgo.SeedBrokers(cfg.Brokers...),"
+                    - "\t\tkgo.RequestRetries(cfg.RequestRetries),"
+                    - "\t\tkgo.RetryTimeout(cfg.RetryTimeout),"
+                    - "\t\tkgo.DialTimeout(cfg.DialTimeout),"
+                    - "\t\tkgo.DefaultProduceTopic(cfg.Topic),"
+                    - "\t}"
+                    - ""
+                    - "\tif cfg.User != \"\" {"
+                    - "\t\tswitch cfg.SASLMechanism {"
+                    - "\t\tcase \"SCRAM-SHA-256\":"
+                    - "\t\t\topts = append(opts, kgo.SASL("
+                    - "\t\t\t\tscram.Auth{"
+                    - "\t\t\t\t\tUser: cfg.User,"
+                    - "\t\t\t\t\tPass: cfg.Password,"
+                    - "\t\t\t\t}.AsSha256Mechanism(),"
+                    - "\t\t\t))"
+                    - "\t\tcase \"SCRAM-SHA-512\":"
+                    - "\t\t\topts = append(opts, kgo.SASL("
+                    - "\t\t\t\tscram.Auth{"
+                    - "\t\t\t\t\tUser: cfg.User,"
+                    - "\t\t\t\t\tPass: cfg.Password,"
+                    - "\t\t\t\t}.AsSha512Mechanism()),"
+                    - "\t\t\t)"
+                    - "\t\t}"
+                    - "\t}"
+                    - ""
+                    - "\tkgoClient, err := kgo.NewClient(opts...)"
+                    - "\tif err != nil {"
+                    - "\t\treturn nil, fmt.Errorf(\"create kafka client: %w\", err)"
+                    - "\t}"
+                    - ""
+                    - "\tctx, cancel := context.WithTimeout(context.Background(), cfg.DialTimeout)"
+                    - "\tdefer cancel()"
+                    - "\terr = kgoClient.Ping(ctx)"
+                    - "\tif err != nil {"
+                    - "\t\treturn nil, fmt.Errorf(\"ping kafka client: %w\", err)"
+                    - "\t}"
+                    - ""
+                    - "\treturn &Client{"
+                    - "\t\tkgoClient:   kgoClient,"
+                    - "\t\tstopTimeout: cfg.StopTimeout,"
+                    - "\t}, nil"
+                    - '}'
+                    - ""
+                    - func (c Client) Stop() error {
+                    - "\tctx, cancel := context.WithTimeout(context.Background(), c.stopTimeout)"
+                    - "\tdefer cancel()"
+                    - ""
+                    - "\tif err := c.kgoClient.Flush(ctx); err != nil {"
+                    - "\t\treturn fmt.Errorf(\"flush timeout, some records may be lost: %w\", err)"
+                    - "\t}"
+                    - ""
+                    - "\tc.kgoClient.Close()"
+                    - "\treturn nil"
+                    - '}'
+            - name: config.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package kafka
+                    - ""
+                    - import "time"
+                    - ""
+                    - type Config struct {
+                    - "\tBrokers         []string      `envconfig:\"KAFKA_BROKERS\"`"
+                    - "\tUser            string        `envconfig:\"KAFKA_USER\"`"
+                    - "\tPassword        string        `envconfig:\"KAFKA_PASSWORD\"`"
+                    - "\tSASLMechanism   string        `envconfig:\"KAFKA_SASL_MECHANISM\" default:\"SCRAM-SHA-256\"`"
+                    - "\tTopic           string        `envconfig:\"KAFKA_TOPIC\"`"
+                    - "\tRequestRetries  int           `envconfig:\"KAFKA_REQUEST_RETRIES\" default:\"3\"`"
+                    - "\tRetryTimeout    time.Duration `envconfig:\"KAFKA_RETRY_TIMEOUT\" default:\"5s\"`"
+                    - "\tConnIdleTimeout time.Duration `envconfig:\"KAFKA_CONN_IDLE_TIMEOUT\" default:\"5s\"`"
+                    - "\tDialTimeout     time.Duration `envconfig:\"KAFKA_DIAL_TIMEOUT\" default:\"5s\"`"
+                    - "\tStopTimeout     time.Duration `envconfig:\"KAFKA_STOP_TIMEOUT\" default:\"5s\"`"
+                    - '}'
+            - name: kafka_producer.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package kafka
+                    - ""
+                    - import (
+                    - "\t\"context\""
+                    - "\t\"log/slog\""
+                    - "\t\"sync\""
+                    - ""
+                    - "\t\"github.com/twmb/franz-go/pkg/kgo\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
+                    - )
+                    - ""
+                    - type Producer struct {
+                    - "\tclient *kgo.Client"
+                    - '}'
+                    - ""
+                    - func NewProducer(client *kgo.Client) *Producer {
+                    - "\treturn &Producer{"
+                    - "\t\tclient: client,"
+                    - "\t}"
+                    - '}'
+                    - ""
+                    - func (p Producer) Publish(ctx context.Context, events []domain.Event) error {
+                    - "\tvar wg sync.WaitGroup"
+                    - ""
+                    - "\tfor _, e := range events {"
+                    - "\t\trecord, err := toKgoRecord(e)"
+                    - "\t\tif err != nil {"
+                    - "\t\t\treturn err"
+                    - "\t\t}"
+                    - ""
+                    - "\t\twg.Add(1)"
+                    - "\t\tp.client.Produce(ctx, record, func(r *kgo.Record, err error) {"
+                    - "\t\t\tdefer wg.Done()"
+                    - ""
+                    - "\t\t\tif err != nil {"
+                    - "\t\t\t\tslog.Error(\"Kafka produce err\", \"key\", r.Key, \"err\", err)"
+                    - "\t\t\t\treturn"
+                    - "\t\t\t}"
+                    - ""
+                    - "\t\t\tslog.Info(\"Delivered\", \"topic\", r.Topic, \"partition\", r.Partition, \"offset\", r.Offset, \"key\", r.Key)"
+                    - "\t\t})"
+                    - ""
+                    - "\t}"
+                    - "\twg.Wait()"
+                    - ""
+                    - "\treturn nil"
+                    - '}'
+            - name: message.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package kafka
+                    - ""
+                    - import (
+                    - "\t\"encoding/json\""
+                    - "\t\"fmt\""
+                    - ""
+                    - "\t\"github.com/twmb/franz-go/pkg/kgo\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
+                    - )
+                    - ""
+                    - func toKgoRecord(e domain.Event) (*kgo.Record, error) {
+                    - "\tvalue, err := json.Marshal(e.Payload)"
+                    - "\tif err != nil {"
+                    - "\t\treturn nil, fmt.Errorf(\"serialize event: %w\", err)"
+                    - "\t}"
+                    - "\treturn &kgo.Record{"
+                    - "\t\tKey:       []byte(e.Key),"
+                    - "\t\tValue:     value,"
+                    - "\t\tTimestamp: e.Timestamp,"
+                    - "\t}, nil"
+                    - '}'
+        - name: usecase
+          mode: 755
+          files:
+            - name: example_kafka_call.go
+              mode: 644
+              blocks:
+                - name: noblocks
+                  type: 0
+                  data:
+                    - package usecase
+                    - ""
+                    - import (
+                    - "\t\"context\""
+                    - "\t\"time\""
+                    - ""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/domain\""
+                    - )
+                    - ""
+                    - func (u Usecase) Example(ctx context.Context) error {
+                    - "\tevent := domain.Event{"
+                    - "\t\tKey:       \"my_key\","
+                    - "\t\tPayload:   \"some payload\","
+                    - "\t\tTimestamp: time.Time{},"
+                    - "\t}"
+                    - ""
+                    - "\terr := u.eventPublisher.Publish(ctx, []domain.Event{event})"
+                    - "\tif err != nil {"
+                    - "\t\treturn err"
+                    - "\t}"
+                    - ""
+                    - "\treturn nil"
+                    - '}'
+            - name: uc.go
+              mode: 644
+              blocks:
+                - name: top
+                  type: 0
+                  data:
+                    - package usecase
+                    - ""
+                    - import "github.com/zlietapki/boilerplate/internal/domain"
+                    - ""
+                    - var _ domain.IUsecase = (*Usecase)(nil) // compile-time check
+                    - ""
+                    - type Usecase struct {
+                - name: uc_struct
+                  type: 1
+                  data:
+                    - "\teventPublisher domain.IEventPublisher"
+                - name: post_uc_struct
+                  type: 0
+                  data:
+                    - '}'
+                    - ""
+                    - type Depends struct {
+                - name: deps
+                  type: 1
+                  data:
+                    - "\tEventPublisher domain.IEventPublisher"
+                - name: post_deps
+                  type: 0
+                  data:
+                    - '}'
+                    - ""
+                    - func New(deps Depends) *Usecase {
+                    - "\treturn &Usecase{"
+                - name: new
+                  type: 1
+                  data:
+                    - "\t\teventPublisher: deps.EventPublisher,"
+                - name: post_new
+                  type: 0
+                  data:
+                    - "\t}"
+                    - '}'

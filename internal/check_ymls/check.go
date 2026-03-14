@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"github.com/zlietapki/microboiler/internal/difflib"
 	"github.com/zlietapki/microboiler/internal/vfs"
 	"github.com/zlietapki/microboiler/pkg/projects"
 )
@@ -88,7 +89,11 @@ func checkBlockSameTypes(path string, fileEntries []fileEntry) bool {
 		ref := blockEntries[0].block.Type
 		for _, be := range blockEntries[1:] {
 			if ref != be.block.Type {
-				fmt.Printf("conflict: file=%q block=%q block type mismatch in projects: %s vs %s",
+				fmt.Printf(`Block type mismatch:
+	file=%q block=%q
+	%s
+	%s
+`,
 					path, blockName, blockEntries[0].projName, be.projName)
 				ok = false
 			}
@@ -121,12 +126,32 @@ func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) bool {
 		firstBlockData := blockEntries[0].block.Data
 		for _, be := range blockEntries[1:] {
 			if !reflect.DeepEqual(firstBlockData, be.block.Data) {
-				fmt.Printf("Conflict blocks type:single. Different content: file=%q block=%q in projects %s vs %s",
+				fmt.Printf(`Different content in blocks type:single
+	file=%q block=%q
+	%s
+	%s
+`,
 					path, blockName, blockEntries[0].projName, be.projName)
+				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+					A:        withNewlines(firstBlockData),
+					B:        withNewlines(be.block.Data),
+					FromFile: blockEntries[0].projName,
+					ToFile:   be.projName,
+					Context:  3,
+				})
+				fmt.Print(diffStr)
 				ok = false
 			}
 		}
 	}
 
 	return ok
+}
+
+func withNewlines(lines []string) []string {
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		out[i] = l + "\n"
+	}
+	return out
 }

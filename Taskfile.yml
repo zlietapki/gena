@@ -9,6 +9,7 @@ tasks:
     cmds:
       - go run ./cmd/fs_generator/ -name microboiler_grpc_server -src ../microboiler_grpc_server/
       - go run ./cmd/fs_generator/ -name microboiler_rest_server -src ../microboiler_rest_server/
+      - go run ./cmd/fs_generator/ -name microboiler_kafka_producer -src ../microboiler_kafka_producer/
 
   run:
     cmds:
@@ -24,7 +25,7 @@ tasks:
       - update
     cmds:
       - rm -rf /tmp/some/check
-      - go run ./cmd/microboiler/ -name check -opt microboiler_grpc_server -opt microboiler_rest_server -output /tmp/some/
+      - go run ./cmd/microboiler/ -name check -opt microboiler_grpc_server -opt microboiler_rest_server -opt microboiler_kafka_producer -output /tmp/some/
 
   lint:
     desc: Run linter

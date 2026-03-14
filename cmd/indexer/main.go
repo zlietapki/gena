@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/zlietapki/microboiler/internal/check_ymls"
-	"github.com/zlietapki/microboiler/internal/generate"
+	"github.com/zlietapki/microboiler/internal/fsindex"
 	"github.com/zlietapki/microboiler/internal/vfs"
 	"gopkg.in/yaml.v3"
 )
@@ -16,7 +16,7 @@ func main() {
 
 	outputFile := filepath.Join("pkg/projects", args.NameProject+".yml")
 
-	project, err := generate.GetDir(args.Src)
+	project, err := fsindex.GetDir(args.Src)
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package merge
+package generator
 
 import "strings"
 
@@ -13,24 +13,23 @@ func mergeLines(linesA []string, linesB []string) []string {
 
 	if header != "" {
 		inner := dedupLines(stripBlock(linesA), stripBlock(linesB))
-		return append([]string{header}, append(inner, ")\n")...)
+		return append([]string{header}, append(inner, ")")...)
 	}
 
 	return dedupLines(linesA, linesB)
 }
 
 func trimEmptyLines(lines []string) []string {
-	i := 0
-	for i < len(lines) && strings.TrimSpace(lines[i]) == "" {
-		i++
+	out := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			out = append(out, line)
+		}
 	}
 
-	j := len(lines) - 1
-	for j >= i && strings.TrimSpace(lines[j]) == "" {
-		j--
-	}
-
-	return lines[i : j+1]
+	return out
 }
 
 func blockHeader(lines []string) string {

@@ -1,11 +1,13 @@
-package generate
+package fsindex
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/zlietapki/microboiler/internal/vfs"
 )
 
 func debug(msg string, args ...interface{}) {
@@ -57,4 +59,15 @@ func isRegexp(line string, reg string) bool {
 	}
 
 	return matched
+}
+
+func getMode(path string) (vfs.OctalMode, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return 0, err
+	}
+
+	perm := info.Mode().Perm()
+
+	return (vfs.OctalMode)(perm), nil
 }

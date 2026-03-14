@@ -1,26 +1,30 @@
 name: microboiler_rest_server
+mode: 755
 files:
     - name: .env
+      mode: 644
       blocks:
-        - name: vars
-          type: 1
-          data:
-            - HTTP_LISTEN=:8080
         - name: common
           type: 0
           data:
             - ENV=local
+        - name: vars
+          type: 1
+          data:
+            - HTTP_LISTEN=:8080
     - name: .env.example
+      mode: 644
       blocks:
-        - name: vars
-          type: 1
-          data:
-            - HTTP_LISTEN=:8080
         - name: common
           type: 0
           data:
             - ENV=local
+        - name: vars
+          type: 1
+          data:
+            - HTTP_LISTEN=:8080
     - name: .gitignore
+      mode: 644
       blocks:
         - name: common
           type: 2
@@ -31,8 +35,9 @@ files:
             - bin/
             - .env
     - name: Dockerfile
+      mode: 644
       blocks:
-        - name: all
+        - name: common
           type: 0
           data:
             - '# Builder stage'
@@ -55,15 +60,15 @@ files:
             - WORKDIR /app
             - ""
             - COPY --from=builder /app/server .
-            - COPY .env .env
             - ""
             - CMD ["./server"]
             - ""
         - name: expose
-          type: 1
+          type: 2
           data:
             - EXPOSE 8080
     - name: README.md
+      mode: 644
       blocks:
         - name: common
           type: 0
@@ -125,11 +130,10 @@ files:
             - '### Example requests'
             - ""
             - '```bash'
-            - curl http://localhost:8080/api/users
-            - 'curl -X POST http://localhost:8080/api/users -H ''Content-Type: application/json'' -d ''{"name":"Alice","email":"alice@example.com"}'''
-            - curl http://localhost:8080/api/users
+            - curl http://localhost:8080/api/counter
             - '```'
     - name: Taskfile.yml
+      mode: 644
       blocks:
         - name: common
           type: 0
@@ -183,7 +187,8 @@ files:
             - '      - oapi_tools'
             - '    cmds:'
             - '      - bin/oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
-    - name: docker-compose.yml
+    - name: docker-compose-server.yml
+      mode: 644
       blocks:
         - name: common
           type: 0
@@ -193,7 +198,7 @@ files:
             - '    build: .'
             - '    ports:'
         - name: ports
-          type: 1
+          type: 2
           data:
             - '      - "8080:8080"'
         - name: post_ports
@@ -202,25 +207,30 @@ files:
             - '    env_file:'
             - '      - .env'
     - name: go.mod
+      mode: 644
       blocks:
-        - name: gomod
+        - name: module
           type: 0
           data:
             - module github.com/zlietapki/boilerplate
-            - ""
+        - name: go_ver
+          type: 0
+          data:
             - go 1.26.1
-            - ""
-        - name: deps
+        - name: require
           type: 2
           data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
             - "\tgithub.com/labstack/echo/v5 v5.0.4"
+            - "\tgithub.com/kelseyhightower/envconfig v1.4.0"
             - )
 dirs:
     - name: api
+      mode: 755
       files:
         - name: oapi-codegen.yml
+          mode: 644
           blocks:
             - name: noblocks
               type: 0
@@ -230,74 +240,45 @@ dirs:
                 - '  models: true'
                 - 'output: internal/rest_models/models.gen.go'
         - name: swagger.yml
+          mode: 644
           blocks:
             - name: noblocks
               type: 0
               data:
                 - 'openapi: 3.0.3'
                 - 'info:'
-                - '  title: Echo Server User API'
+                - '  title: Rest Server User API'
                 - '  version: 1.0.0'
                 - 'paths:'
-                - '  /api/users:'
+                - '  /api/counter:'
                 - '    get:'
-                - '      summary: List users'
-                - '      operationId: getUsers'
+                - '      summary: Get counter'
+                - '      operationId: getCounter'
                 - '      responses:'
                 - '        ''200'':'
                 - '          description: OK'
                 - '          content:'
                 - '            application/json:'
                 - '              schema:'
-                - '                type: array'
-                - '                items:'
-                - '                  $ref: ''#/components/schemas/User'''
-                - '    post:'
-                - '      summary: Create user'
-                - '      operationId: createUser'
-                - '      requestBody:'
-                - '        required: true'
-                - '        content:'
-                - '          application/json:'
-                - '            schema:'
-                - '              $ref: ''#/components/schemas/CreateUserRequest'''
-                - '      responses:'
-                - '        ''201'':'
-                - '          description: Created'
-                - '          content:'
-                - '            application/json:'
-                - '              schema:'
-                - '                $ref: ''#/components/schemas/User'''
+                - '                $ref: ''#/components/schemas/Counter'''
                 - 'components:'
                 - '  schemas:'
-                - '    User:'
+                - '    Counter:'
                 - '      type: object'
-                - '      required: [id, name, email]'
+                - '      required: [value]'
                 - '      properties:'
-                - '        id:'
+                - '        value:'
                 - '          type: integer'
-                - '        name:'
-                - '          type: string'
-                - '        email:'
-                - '          type: string'
-                - '    CreateUserRequest:'
-                - '      type: object'
-                - '      required: [name, email]'
-                - '      properties:'
-                - '        name:'
-                - '          type: string'
-                - '        email:'
-                - '          type: string'
-      dirs: []
     - name: bin
-      files: []
-      dirs: []
+      mode: 755
     - name: cmd
-      files: []
+      mode: 755
       dirs:
         - name: server
+          mode: 755
           files:
             - name: main.go
+              mode: 644
               blocks:
                 - name: top
                   type: 0
@@ -314,7 +295,7 @@ dirs:
                     - "\t\"syscall\""
                     - ""
                     - "\t\"github.com/zlietapki/boilerplate/internal/config\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/repository\""
+                    - "\t\"github.com/zlietapki/boilerplate/internal/map_repo\""
                     - "\t\"github.com/zlietapki/boilerplate/internal/rest_handler\""
                     - "\t\"github.com/zlietapki/boilerplate/internal/usecase\""
                     - "\t\"github.com/zlietapki/boilerplate/pkg/httpserver\""
@@ -326,10 +307,25 @@ dirs:
                     - func main() {
                     - "\tcfg := config.New()"
                     - ""
-                    - "\trepo := repository.New()"
-                    - "\tuc := usecase.New(repo)"
+                - name: usecase_deps
+                  type: 1
+                  data:
+                    - "\tmapRepo := map_repo.New()"
                     - ""
-                - name: handler
+                - name: new_usecase
+                  type: 0
+                  data:
+                    - "\tuc := usecase.New(usecase.Depends{"
+                - name: usecase_deps_objs
+                  type: 1
+                  data:
+                    - "\t\tMemRepo: mapRepo,"
+                - name: post_usecase_deps_objs
+                  type: 0
+                  data:
+                    - "\t})"
+                    - ""
+                - name: after_usecase
                   type: 1
                   data:
                     - "\trestHandler := rest_handler.New(uc)"
@@ -337,8 +333,7 @@ dirs:
                     - "\thttpServer := httpserver.New(cfg.HTTPListen)"
                     - ""
                     - "\tapi := httpServer.Srv.Group(\"/api\")"
-                    - "\tapi.GET(\"/users\", restHandler.GetUsers)"
-                    - "\tapi.POST(\"/users\", restHandler.CreateUser)"
+                    - "\tapi.GET(\"/counter\", restHandler.GetCounter)"
                     - ""
                     - "\thttpErrCh := httpServer.Start()"
                     - "\tslog.Info(\"HTTP listening\", \"addr\", cfg.HTTPListen)"
@@ -352,124 +347,103 @@ dirs:
                     - "\tselect {"
                     - "\tcase <-signals:"
                     - ""
-                - name: signals_handler
+                - name: signals_select
                   type: 1
                   data:
                     - "\tcase err := <-httpErrCh:"
                     - "\t\tpanic(\"http server\" + err.Error())"
-                    - ""
-                - name: bottom
+                - name: post_signals_select
                   type: 0
                   data:
                     - "\t}"
+                - name: bottom
+                  type: 0
+                  data:
                     - '}'
-          dirs: []
     - name: internal
-      files: []
+      mode: 755
       dirs:
         - name: config
+          mode: 755
           files:
             - name: config.go
+              mode: 644
               blocks:
                 - name: top
                   type: 0
                   data:
                     - package config
                     - ""
+                - name: import
+                  type: 2
+                  data:
                     - import (
+                    - "\t\"log/slog\""
                     - "\t\"os\""
                     - ""
                     - "\t\"github.com/joho/godotenv\""
+                    - "\t\"github.com/kelseyhightower/envconfig\""
                     - )
                     - ""
-                    - type Config struct {
-                - name: struct
-                  type: 1
-                  data:
-                    - "\tHTTPListen string"
-                - name: body
+                - name: post_import
                   type: 0
                   data:
-                    - "\tEnv string"
+                    - type Config struct {
+                    - "\tEnv string `envconfig:\"ENV\"`"
+                - name: conf
+                  type: 1
+                  data:
+                    - "\tHTTPListen string `envconfig:\"HTTP_LISTEN\"`"
+                - name: rest
+                  type: 0
+                  data:
                     - '}'
                     - ""
-                    - func New() *Config {
+                    - func New() Config {
                     - "\tgodotenv.Load()"
                     - ""
-                    - "\treturn &Config{"
-                - name: return
-                  type: 1
-                  data:
-                    - "\t\tHTTPListen: getEnv(\"HTTP_LISTEN\", \":8080\"),"
-                - name: post_return
-                  type: 0
-                  data:
-                    - "\t\tEnv: getEnv(\"ENV\", \"local\"),"
-                    - "\t}"
-                    - '}'
-                    - ""
-                    - func getEnv(key, fallback string) string {
-                    - "\tif v := os.Getenv(key); v != \"\" {"
-                    - "\t\treturn v"
+                    - "\tvar cfg Config"
+                    - "\terr := envconfig.Process(\"\", &cfg)"
+                    - "\tif err != nil {"
+                    - "\t\tslog.Error(\"config parse failed\", \"err\", err)"
+                    - "\t\tos.Exit(1)"
                     - "\t}"
                     - ""
-                    - "\treturn fallback"
+                    - "\treturn cfg"
                     - '}'
-          dirs: []
         - name: domain
+          mode: 755
           files:
-            - name: errors.go
+            - name: counter_repo.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
                   data:
                     - package domain
                     - ""
-                    - import "errors"
-                    - ""
-                    - var (
-                    - "\tErrNotFound = errors.New(\"not found\")"
-                    - "\tErrConflict = errors.New(\"conflict\")"
-                    - )
-            - name: models.go
-              blocks:
-                - name: noblocks
-                  type: 0
-                  data:
-                    - package domain
-                    - ""
-                    - type User struct {
-                    - "\tID    int    `json:\"id\"`"
-                    - "\tName  string `json:\"name\"`"
-                    - "\tEmail string `json:\"email\"`"
+                    - type ICounterRepo interface {
+                    - "\tGetNextCounter() (Counter, error)"
                     - '}'
-            - name: repository.go
+            - name: models.go
+              mode: 644
               blocks:
-                - name: all
+                - name: noblocks
                   type: 0
                   data:
                     - package domain
                     - ""
-                    - type IRepository interface {
-                - name: repo_methods
-                  type: 1
-                  data:
-                    - "\tFindAll() ([]User, error)"
-                    - "\tSave(*User) error"
-                - name: post_repo_methods
-                  type: 0
-                  data:
+                    - type Counter struct {
+                    - "\tValue int `json:\"value\"`"
                     - '}'
             - name: usecase.go
+              mode: 644
               blocks:
                 - name: top
                   type: 0
                   data:
                     - package domain
                     - ""
-                - name: imports
-                  type: 2
-                  data: []
                 - name: usecase
                   type: 0
                   data:
@@ -477,48 +451,38 @@ dirs:
                 - name: methods
                   type: 2
                   data:
-                    - "\tGetAll() ([]User, error)"
-                    - "\tCreate(name, email string) (*User, error)"
+                    - "\tGetCounter() (Counter, error)"
                 - name: post_methods
                   type: 0
                   data:
                     - '}'
-          dirs: []
-        - name: repository
+        - name: map_repo
+          mode: 755
           files:
-            - name: m_findall.go
+            - name: m_get_next_count.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
                   data:
-                    - package repository
+                    - package map_repo
                     - ""
                     - import "github.com/zlietapki/boilerplate/internal/domain"
                     - ""
-                    - func (r *Repo) FindAll() ([]domain.User, error) {
-                    - "\treturn r.users, nil"
-                    - '}'
-            - name: m_save.go
-              blocks:
-                - name: noblocks
-                  type: 0
-                  data:
-                    - package repository
+                    - func (r *MapRepo) GetNextCounter() (domain.Counter, error) {
+                    - "\tr.mem[\"count\"]++"
                     - ""
-                    - import "github.com/zlietapki/boilerplate/internal/domain"
-                    - ""
-                    - func (r *Repo) Save(u *domain.User) error {
-                    - "\tu.ID = r.nextID"
-                    - "\tr.nextID++"
-                    - "\tr.users = append(r.users, *u)"
-                    - "\treturn nil"
+                    - "\treturn domain.Counter{"
+                    - "\t\tValue: r.mem[\"count\"],"
+                    - "\t}, nil"
                     - '}'
-            - name: repo.go
+            - name: map_repo.go
+              mode: 644
               blocks:
                 - name: top
                   type: 0
                   data:
-                    - package repository
+                    - package map_repo
                     - ""
                 - name: imports
                   type: 2
@@ -529,34 +493,34 @@ dirs:
                   type: 0
                   data:
                     - ""
-                    - var _ domain.IRepository = (*Repo)(nil) // compile-time check
+                    - var _ domain.ICounterRepo = (*MapRepo)(nil) // compile-time check
                     - ""
-                    - type Repo struct {
+                    - type MapRepo struct {
                 - name: repo_struct
                   type: 2
                   data:
-                    - "\tusers  []domain.User"
-                    - "\tnextID int"
+                    - "\tmem map[string]int"
                 - name: post_repo_struct
                   type: 0
                   data:
                     - '}'
                     - ""
-                    - func New() *Repo {
-                    - "\treturn &Repo{"
+                    - func New() *MapRepo {
+                    - "\treturn &MapRepo{"
                 - name: repo_init
                   type: 2
                   data:
-                    - "\t\tnextID: 1,"
+                    - "\t\tmem: make(map[string]int),"
                 - name: post_repo_init
                   type: 0
                   data:
                     - "\t}"
                     - '}'
-          dirs: []
         - name: rest_handler
+          mode: 755
           files:
             - name: convert.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -568,51 +532,13 @@ dirs:
                     - "\t\"github.com/zlietapki/boilerplate/internal/rest_models\""
                     - )
                     - ""
-                    - func domainUserToRestAPI(u *domain.User) rest_models.User {
-                    - "\treturn rest_models.User{"
-                    - "\t\tId:    u.ID,"
-                    - "\t\tName:  u.Name,"
-                    - "\t\tEmail: u.Email,"
+                    - func domainCounterToRestAPI(u domain.Counter) rest_models.Counter {
+                    - "\treturn rest_models.Counter{"
+                    - "\t\tValue: u.Value,"
                     - "\t}"
                     - '}'
-                    - ""
-                    - func domainUsersToRestAPI(users []domain.User) []rest_models.User {
-                    - "\tresult := make([]rest_models.User, len(users))"
-                    - ""
-                    - "\tfor i := range users {"
-                    - "\t\tresult[i] = domainUserToRestAPI(&users[i])"
-                    - "\t}"
-                    - ""
-                    - "\treturn result"
-                    - '}'
-            - name: m_create_user.go
-              blocks:
-                - name: noblocks
-                  type: 0
-                  data:
-                    - package rest_handler
-                    - ""
-                    - import (
-                    - "\t\"net/http\""
-                    - ""
-                    - "\t\"github.com/labstack/echo/v5\""
-                    - "\t\"github.com/zlietapki/boilerplate/internal/rest_models\""
-                    - )
-                    - ""
-                    - func (h *UserHandler) CreateUser(c *echo.Context) error {
-                    - "\tvar req rest_models.CreateUserRequest"
-                    - "\tif err := c.Bind(&req); err != nil {"
-                    - "\t\treturn c.JSON(http.StatusBadRequest, map[string]string{\"error\": err.Error()})"
-                    - "\t}"
-                    - ""
-                    - "\tuser, err := h.uc.Create(req.Name, req.Email)"
-                    - "\tif err != nil {"
-                    - "\t\treturn c.JSON(http.StatusInternalServerError, map[string]string{\"error\": err.Error()})"
-                    - "\t}"
-                    - ""
-                    - "\treturn c.JSON(http.StatusCreated, domainUserToRestAPI(user))"
-                    - '}'
-            - name: m_get_users.go
+            - name: m_get_counter.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -625,15 +551,16 @@ dirs:
                     - "\t\"github.com/labstack/echo/v5\""
                     - )
                     - ""
-                    - func (h *UserHandler) GetUsers(c *echo.Context) error {
-                    - "\tusers, err := h.uc.GetAll()"
+                    - func (h *UserHandler) GetCounter(c *echo.Context) error {
+                    - "\tcounter, err := h.uc.GetCounter()"
                     - "\tif err != nil {"
                     - "\t\treturn c.JSON(http.StatusInternalServerError, map[string]string{\"error\": err.Error()})"
                     - "\t}"
                     - ""
-                    - "\treturn c.JSON(http.StatusOK, domainUsersToRestAPI(users))"
+                    - "\treturn c.JSON(http.StatusOK, domainCounterToRestAPI(counter))"
                     - '}'
             - name: rest_handler.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -647,12 +574,15 @@ dirs:
                     - '}'
                     - ""
                     - func New(uc *usecase.Usecase) *UserHandler {
-                    - "\treturn &UserHandler{uc: uc}"
+                    - "\treturn &UserHandler{"
+                    - "\t\tuc: uc,"
+                    - "\t}"
                     - '}'
-          dirs: []
         - name: rest_models
+          mode: 755
           files:
             - name: models.gen.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -662,25 +592,15 @@ dirs:
                     - // Code generated by github.com/oapi-codegen/oapi-codegen/v2 version v2.6.0 DO NOT EDIT.
                     - package rest_models
                     - ""
-                    - // CreateUserRequest defines model for CreateUserRequest.
-                    - type CreateUserRequest struct {
-                    - "\tEmail string `json:\"email\"`"
-                    - "\tName  string `json:\"name\"`"
+                    - // Counter defines model for Counter.
+                    - type Counter struct {
+                    - "\tValue int `json:\"value\"`"
                     - '}'
-                    - ""
-                    - // User defines model for User.
-                    - type User struct {
-                    - "\tEmail string `json:\"email\"`"
-                    - "\tId    int    `json:\"id\"`"
-                    - "\tName  string `json:\"name\"`"
-                    - '}'
-                    - ""
-                    - // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
-                    - type CreateUserJSONRequestBody = CreateUserRequest
-          dirs: []
         - name: usecase
+          mode: 755
           files:
-            - name: m_create.go
+            - name: m_get_counter.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -689,28 +609,13 @@ dirs:
                     - ""
                     - import "github.com/zlietapki/boilerplate/internal/domain"
                     - ""
-                    - func (uc *Usecase) Create(name, email string) (*domain.User, error) {
-                    - "\tu := &domain.User{Name: name, Email: email}"
-                    - "\tif err := uc.repo.Save(u); err != nil {"
-                    - "\t\treturn nil, err"
-                    - "\t}"
-                    - "\treturn u, nil"
-                    - '}'
-            - name: m_getall.go
-              blocks:
-                - name: noblocks
-                  type: 0
-                  data:
-                    - package usecase
-                    - ""
-                    - import "github.com/zlietapki/boilerplate/internal/domain"
-                    - ""
-                    - func (uc *Usecase) GetAll() ([]domain.User, error) {
-                    - "\treturn uc.repo.FindAll()"
+                    - func (uc *Usecase) GetCounter() (domain.Counter, error) {
+                    - "\treturn uc.counterRepo.GetNextCounter()"
                     - '}'
             - name: uc.go
+              mode: 644
               blocks:
-                - name: noblocks
+                - name: top
                   type: 0
                   data:
                     - package usecase
@@ -720,21 +625,44 @@ dirs:
                     - var _ domain.IUsecase = (*Usecase)(nil) // compile-time check
                     - ""
                     - type Usecase struct {
-                    - "\trepo domain.IRepository"
+                - name: uc_struct
+                  type: 1
+                  data:
+                    - "\tcounterRepo domain.ICounterRepo"
+                - name: post_uc_struct
+                  type: 0
+                  data:
                     - '}'
                     - ""
-                    - func New(repo domain.IRepository) *Usecase {
+                    - type Depends struct {
+                - name: deps
+                  type: 1
+                  data:
+                    - "\tMemRepo domain.ICounterRepo"
+                - name: post_deps
+                  type: 0
+                  data:
+                    - '}'
+                    - ""
+                    - func New(deps Depends) *Usecase {
                     - "\treturn &Usecase{"
-                    - "\t\trepo: repo,"
+                - name: new
+                  type: 1
+                  data:
+                    - "\t\tcounterRepo: deps.MemRepo,"
+                - name: post_new
+                  type: 0
+                  data:
                     - "\t}"
                     - '}'
-          dirs: []
     - name: pkg
-      files: []
+      mode: 755
       dirs:
         - name: httpserver
+          mode: 755
           files:
             - name: http_server.go
+              mode: 644
               blocks:
                 - name: noblocks
                   type: 0
@@ -776,4 +704,3 @@ dirs:
                     - func (s *Server) Stop() {
                     - ""
                     - '}'
-          dirs: []
