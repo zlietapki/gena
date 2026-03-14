@@ -35,7 +35,7 @@ func main() {
 	result := generator.MergeDirs(selected...)
 	result.Name = args.ProjectName
 
-	err = createFileSystem(result, args.Output)
+	err = writeFiles(result, args.Output)
 	if err != nil {
 		printError("Error on write project: %v\n", err)
 	}
