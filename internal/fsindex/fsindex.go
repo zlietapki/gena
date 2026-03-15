@@ -190,35 +190,35 @@ func indexBlocks(path string) ([]vfs.Block, error) {
 func isStartBlock(filename, ext, line string) bool {
 	line = strings.TrimSpace(line)
 
-	if ext == ".go" && isRegexp(line, `^//\s?start`) {
+	if ext == ".go" && isMatch(line, `^//\s?start`) {
 		return true
 	}
 
-	if ext == ".yml" && isRegexp(line, `^#\s?start`) {
+	if ext == ".yml" && isMatch(line, `^#\s?start`) {
 		return true
 	}
 
-	if ext == ".md" && isRegexp(line, `^\[//\]: # \(start`) {
+	if ext == ".md" && isMatch(line, `^\[//\]: # \(start`) {
 		return true
 	}
 
-	if filename == "go.mod" && isRegexp(line, `^//\s?start`) {
+	if filename == "go.mod" && isMatch(line, `^//\s?start`) {
 		return true
 	}
 
-	if filename == ".env" && isRegexp(line, `^#\s?start`) {
+	if filename == ".env" && isMatch(line, `^#\s?start`) {
 		return true
 	}
 
-	if filename == ".env.example" && isRegexp(line, `^#\s?start`) {
+	if filename == ".env.example" && isMatch(line, `^#\s?start`) {
 		return true
 	}
 
-	if filename == ".gitignore" && isRegexp(line, `^#\s?start`) {
+	if filename == ".gitignore" && isMatch(line, `^#\s?start`) {
 		return true
 	}
 
-	if filename == "Dockerfile" && isRegexp(line, `^#\s?start`) {
+	if filename == "Dockerfile" && isMatch(line, `^#\s?start`) {
 		return true
 	}
 
@@ -228,35 +228,35 @@ func isStartBlock(filename, ext, line string) bool {
 func isEndBlock(filename, ext, line string) bool {
 	line = strings.TrimSpace(line)
 
-	if ext == ".go" && isRegexp(line, `^//\s?end`) {
+	if ext == ".go" && isMatch(line, `^//\s?end`) {
 		return true
 	}
 
-	if ext == ".yml" && isRegexp(line, `^#\s?end`) {
+	if ext == ".yml" && isMatch(line, `^#\s?end`) {
 		return true
 	}
 
-	if ext == ".md" && isRegexp(line, `^\[//\]: # \(end\)`) {
+	if ext == ".md" && isMatch(line, `^\[//\]: # \(end\)`) {
 		return true
 	}
 
-	if filename == "go.mod" && isRegexp(line, `^//\s?end`) {
+	if filename == "go.mod" && isMatch(line, `^//\s?end`) {
 		return true
 	}
 
-	if filename == ".env" && isRegexp(line, `^#\s?end`) {
+	if filename == ".env" && isMatch(line, `^#\s?end`) {
 		return true
 	}
 
-	if filename == ".env.example" && isRegexp(line, `^#\s?end`) {
+	if filename == ".env.example" && isMatch(line, `^#\s?end`) {
 		return true
 	}
 
-	if filename == ".gitignore" && isRegexp(line, `^#\s?end`) {
+	if filename == ".gitignore" && isMatch(line, `^#\s?end`) {
 		return true
 	}
 
-	if filename == "Dockerfile" && isRegexp(line, `^#\s?end`) {
+	if filename == "Dockerfile" && isMatch(line, `^#\s?end`) {
 		return true
 	}
 

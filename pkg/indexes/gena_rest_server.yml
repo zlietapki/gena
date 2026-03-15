@@ -140,53 +140,62 @@ files:
           data:
             - 'version: ''3'''
             - ""
+            - 'vars:'
+            - '  BIN_DIR: bin'
+            - ""
+            - 'env:'
+            - '  BIN_PATH:'
+            - '    sh: "echo `pwd`/{{ .BIN_DIR }}:$PATH"'
+            - '  GOBIN:'
+            - '    sh: "echo `pwd`/{{ .BIN_DIR }}"'
+            - ""
             - 'tasks:'
             - '  default:'
             - '    cmds:'
-            - '      - task: build'
-            - ""
-            - '  build:'
-            - '    desc: Build project'
-            - '    cmds:'
-            - '      - go build -o bin/server ./cmd/server'
-            - ""
-            - '  run:'
-            - '    desc: Run project'
-            - '    cmds:'
-            - '      - go run ./cmd/server'
-            - ""
-            - '  test:'
-            - '    desc: Run tests'
-            - '    cmds:'
-            - '      - go test ./...'
+            - '      - task: run'
             - ""
             - '  lint:'
             - '    desc: Run linter'
             - '    cmds:'
             - '      - go fmt ./...'
             - '      - go vet ./...'
-        - name: gen_rest_models
-          type: single
-          data:
-            - '  oapi_tools:'
+            - ""
+            - '  tools:'
             - '    desc: Install tool bins'
             - '    run: once'
-            - '    env:'
-            - '      GOBIN:'
-            - '        sh: "echo `pwd`/bin"'
             - '    cmds:'
+        - name: tools_cmds
+          type: merge
+          data:
+            - '      - go install github.com/gojuno/minimock/v3/cmd/minimock@v3.4.7'
             - '      - go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.6.0'
+        - name: sources
+          type: single
+          data:
             - '    sources: # run if changed'
             - '      - Taskfile.yml'
             - '    generates: # run if missing'
-            - '      - "bin/oapi-codegen"'
-            - ""
-            - '  generate_models:'
-            - '    desc: Generate models'
-            - '    deps:'
-            - '      - oapi_tools'
+        - name: tools_generates
+          type: merge
+          data:
+            - '      - "{{ .BIN_DIR }}/minimock"'
+            - '      - "{{ .BIN_DIR }}/oapi-codegen"'
+        - name: generate
+          type: single
+          data:
+            - '  generate:'
             - '    cmds:'
-            - '      - bin/oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
+            - '      - PATH=$BIN_PATH go generate ./...'
+            - ""
+            - '  test:'
+            - '    desc: Run tests'
+            - '    cmds:'
+            - '      - go test ./...'
+            - ""
+            - '  run:'
+            - '    desc: Run project'
+            - '    cmds:'
+            - '      - go run ./cmd/server'
     - name: docker-compose-server.yml
       mode: 644
       blocks:
@@ -222,13 +231,22 @@ files:
           data:
             - require (
             - "\tgithub.com/joho/godotenv v1.5.1"
-            - "\tgithub.com/labstack/echo/v5 v5.0.4"
             - "\tgithub.com/kelseyhightower/envconfig v1.4.0"
+            - "\tgithub.com/labstack/echo/v5 v5.0.4"
             - )
 dirs:
     - name: api
       mode: 755
       files:
+        - name: generate.go
+          mode: 644
+          blocks:
+            - name: noblocks
+              type: single
+              data:
+                - package api
+                - ""
+                - //go:generate oapi-codegen --config=oapi-codegen.yml swagger.yml
         - name: oapi-codegen.yml
           mode: 644
           blocks:
@@ -238,7 +256,7 @@ dirs:
                 - 'package: rest_models'
                 - 'generate:'
                 - '  models: true'
-                - 'output: internal/rest_models/models.gen.go'
+                - 'output: ../internal/rest_models/models.gen.go'
         - name: swagger.yml
           mode: 644
           blocks:
@@ -447,6 +465,8 @@ dirs:
                 - name: usecase
                   type: single
                   data:
+                    - ""
+                    - //go:generate minimock -g -i IUsecase -o mocks -s _mock.gen.go
                     - type IUsecase interface {
                 - name: methods
                   type: merge
@@ -456,6 +476,9 @@ dirs:
                   type: single
                   data:
                     - '}'
+          dirs:
+            - name: mocks
+              mode: 755
         - name: map_repo
           mode: 755
           files:
@@ -580,22 +603,6 @@ dirs:
                     - '}'
         - name: rest_models
           mode: 755
-          files:
-            - name: models.gen.go
-              mode: 644
-              blocks:
-                - name: noblocks
-                  type: single
-                  data:
-                    - // Package rest_models provides primitives to interact with the openapi HTTP API.
-                    - //
-                    - // Code generated by github.com/oapi-codegen/oapi-codegen/v2 version v2.6.0 DO NOT EDIT.
-                    - package rest_models
-                    - ""
-                    - // Counter defines model for Counter.
-                    - type Counter struct {
-                    - "\tValue int `json:\"value\"`"
-                    - '}'
         - name: usecase
           mode: 755
           files:

@@ -21,6 +21,9 @@ func ignoreFile(name string) bool {
 	if name == "go.sum" {
 		return true
 	}
+	if isMatch(name, `\.gen\.go$`) {
+		return true
+	}
 
 	return false
 }
@@ -53,7 +56,7 @@ func isTextFile(filePath string) bool {
 	return false
 }
 
-func isRegexp(line string, reg string) bool {
+func isMatch(line string, reg string) bool {
 	matched, err := regexp.MatchString(reg, line)
 	if err != nil {
 		panic(err)

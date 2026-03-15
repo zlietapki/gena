@@ -153,31 +153,60 @@ files:
           data:
             - 'version: ''3'''
             - ""
+            - 'vars:'
+            - '  BIN_DIR: bin'
+            - ""
+            - 'env:'
+            - '  BIN_PATH:'
+            - '    sh: "echo `pwd`/{{ .BIN_DIR }}:$PATH"'
+            - '  GOBIN:'
+            - '    sh: "echo `pwd`/{{ .BIN_DIR }}"'
+            - ""
             - 'tasks:'
             - '  default:'
             - '    cmds:'
-            - '      - task: build'
-            - ""
-            - '  build:'
-            - '    desc: Build project'
-            - '    cmds:'
-            - '      - go build -o bin/server ./cmd/server'
-            - ""
-            - '  run:'
-            - '    desc: Run project'
-            - '    cmds:'
-            - '      - go run ./cmd/server'
-            - ""
-            - '  test:'
-            - '    desc: Run tests'
-            - '    cmds:'
-            - '      - go test ./...'
+            - '      - task: run'
             - ""
             - '  lint:'
             - '    desc: Run linter'
             - '    cmds:'
             - '      - go fmt ./...'
             - '      - go vet ./...'
+            - ""
+            - '  tools:'
+            - '    desc: Install tool bins'
+            - '    run: once'
+            - '    cmds:'
+        - name: tools_cmds
+          type: merge
+          data:
+            - '      - go install github.com/gojuno/minimock/v3/cmd/minimock@v3.4.7'
+        - name: sources
+          type: single
+          data:
+            - '    sources: # run if changed'
+            - '      - Taskfile.yml'
+            - '    generates: # run if missing'
+        - name: tools_generates
+          type: merge
+          data:
+            - '      - "{{ .BIN_DIR }}/minimock"'
+        - name: generate
+          type: single
+          data:
+            - '  generate:'
+            - '    cmds:'
+            - '      - PATH=$BIN_PATH go generate ./...'
+            - ""
+            - '  test:'
+            - '    desc: Run tests'
+            - '    cmds:'
+            - '      - go test ./...'
+            - ""
+            - '  run:'
+            - '    desc: Run project'
+            - '    cmds:'
+            - '      - go run ./cmd/server'
     - name: docker-compose-server.yml
       mode: 644
       blocks:
@@ -392,6 +421,8 @@ dirs:
                 - name: usecase
                   type: single
                   data:
+                    - ""
+                    - //go:generate minimock -g -i IUsecase -o mocks -s _mock.gen.go
                     - type IUsecase interface {
                 - name: methods
                   type: merge

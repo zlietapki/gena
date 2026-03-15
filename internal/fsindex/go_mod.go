@@ -28,7 +28,7 @@ func getGoModBlocks(path string) ([]vfs.Block, error) {
 			continue
 		}
 
-		if isRegexp(line, `^go \d+\.\d+`) {
+		if isMatch(line, `^go \d+\.\d+`) {
 			blocks = append(blocks, vfs.Block{Name: "go_ver", Type: vfs.BlockTypeSingle, Data: []string{line}})
 			continue
 		}
