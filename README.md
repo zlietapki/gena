@@ -28,6 +28,7 @@ Commands:
 * version - версия indexer
 
 ```shell
+go run ./cmd/indexer/ help
 go run ./cmd/indexer/ list
 go run ./cmd/indexer/ add -name gena_grpc_server -src ../gena_grpc_server/
 go run ./cmd/indexer/ add -name gena_rest_server -src ../gena_rest_server/
@@ -48,11 +49,12 @@ Commands:
 * list - показать список шаблонов
 * new - генерация проекта
   * -use index_name - использовать шаблон
-  * -out - папка назначения 
+  * -out - папка назначения
 
 ```shell
-go run ./cmd/gena/ new [-use index_name] [-out output_path]
+go run ./cmd/gena/ help
 go run ./cmd/gena/ list
+go run ./cmd/gena/ new -use gena_grpc_server -use gena_rest_server -out /tmp/gena/project
 go run ./cmd/gena/ version
 ```
 

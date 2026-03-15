@@ -145,6 +145,8 @@ files:
           type: single
           data:
             - '  generate:'
+            - '    deps:'
+            - '      - tools'
             - '    cmds:'
             - '      - PATH=$BIN_PATH go generate ./...'
             - ""

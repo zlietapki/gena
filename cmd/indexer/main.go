@@ -45,10 +45,10 @@ func main() {
 		if args.Name != "" && args.Src != "" {
 			addIndex(args.Name, args.Src)
 			os.Exit(0)
-		} else {
-			fmt.Fprintf(os.Stderr, "usage: indexer add [-name <name>] [-src <path>]\n")
-			os.Exit(1)
 		}
+
+		fmt.Fprintf(os.Stderr, "usage: indexer add [-name <name>] [-src <path>]\n")
+		os.Exit(1)
 	}
 
 	usage()

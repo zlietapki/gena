@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/zlietapki/gena/internal/generator"
@@ -12,40 +11,79 @@ import (
 	"github.com/zlietapki/gena/pkg/indexes"
 )
 
+const Version = "v1.0.0"
+
 func main() {
-	args, err := getArgs(indexes.Names())
-	if err != nil {
-		printError(err.Error())
+	args := getArgs()
+
+	if args.List {
+		showIndexList()
+		os.Exit(0)
 	}
 
-	if !pathExistsAndIsDir(args.Output) {
-		printError("Output directory does not exist: %s", args.Output)
+	if args.Version {
+		showVersion()
+		os.Exit(0)
 	}
 
-	var selected []vfs.Directory
-	for _, opt := range args.Options {
+	if args.New {
+		if len(args.Use) > 0 && args.Output != "" {
+			newProject(args.Use, args.Output)
+			os.Exit(0)
+		}
+
+		fmt.Fprintf(os.Stderr, "usage: gena new [-use <index_name>] [-use <index_name>] [-out <path>]\n")
+		os.Exit(1)
+	}
+
+	usage()
+}
+
+func newProject(use []string, output string) {
+	if pathExists(output) {
+		printError("Output directory already exists: %s", output)
+	}
+
+	var idxs []vfs.Directory
+	for _, opt := range use {
 		proj, err := indexes.GetByName(opt)
 		if err != nil {
 			printError(err.Error())
 		}
 
-		selected = append(selected, *proj)
+		idxs = append(idxs, *proj)
 	}
 
-	result := generator.MergeDirs(selected...)
+	result := generator.MergeDirs(idxs...)
 
-	err = writeFiles(result, args.Output)
+	if err := os.MkdirAll(output, 0755); err != nil {
+		println("11111")
+		printError(err.Error())
+	}
+
+	err := writeFiles(result, output, true)
 	if err != nil {
 		printError("Error on write project: %v\n", err)
 	}
 
-	outputDir := filepath.Join(args.Output, args.ProjectName)
-	fmt.Printf("Project boilerplate generated %s\n", outputDir)
+	fmt.Printf("Project boilerplate generated %s\n", output)
 
 	// post commands
-	runCmd(outputDir, "go mod tidy")
-	runCmd(outputDir, "go fmt ./...")
-	runCmd(outputDir, "goimports -w -local github.com/zlietapki/boilerplate .")
+	runCmd(output, "task generate")
+	runCmd(output, "go mod tidy")
+	runCmd(output, "go fmt ./...")
+	runCmd(output, "goimports -w -local github.com/zlietapki/boilerplate .")
+}
+
+func showIndexList() {
+	idxs := indexes.Names()
+	for _, idx := range idxs {
+		fmt.Printf("%s\n", idx)
+	}
+}
+
+func showVersion() {
+	fmt.Printf("%s\n", Version)
 }
 
 func runCmd(currentDir string, command string) {
