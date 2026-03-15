@@ -33,7 +33,6 @@ func main() {
 	}
 
 	result := generator.MergeDirs(selected...)
-	result.Name = args.ProjectName
 
 	err = writeFiles(result, args.Output)
 	if err != nil {
@@ -43,7 +42,7 @@ func main() {
 	outputDir := filepath.Join(args.Output, args.ProjectName)
 	fmt.Printf("Project boilerplate generated %s\n", outputDir)
 
-	// format code
+	// post commands
 	runCmd(outputDir, "go mod tidy")
 	runCmd(outputDir, "go fmt ./...")
 	runCmd(outputDir, "goimports -w -local github.com/zlietapki/boilerplate .")

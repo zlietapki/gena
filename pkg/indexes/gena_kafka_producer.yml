@@ -439,19 +439,20 @@ dirs:
                     - ""
                     - "\t\"github.com/joho/godotenv\""
                     - "\t\"github.com/kelseyhightower/envconfig\""
+                    - ""
                     - "\t\"github.com/zlietapki/gena/internal/kafka\""
                     - )
                     - ""
-                - name: post_import
+                - name: config_struct
                   type: single
                   data:
                     - type Config struct {
                     - "\tEnv string `envconfig:\"ENV\"`"
-                - name: conf
+                - name: config_fields
                   type: add
                   data:
                     - "\tKafka kafka.Config"
-                - name: rest
+                - name: post_config_fields
                   type: single
                   data:
                     - '}'

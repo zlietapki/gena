@@ -403,16 +403,16 @@ dirs:
                     - "\t\"github.com/kelseyhightower/envconfig\""
                     - )
                     - ""
-                - name: post_import
+                - name: config_struct
                   type: single
                   data:
                     - type Config struct {
                     - "\tEnv string `envconfig:\"ENV\"`"
-                - name: conf
+                - name: config_fields
                   type: add
                   data:
                     - "\tHTTPListen string `envconfig:\"HTTP_LISTEN\"`"
-                - name: rest
+                - name: post_config_fields
                   type: single
                   data:
                     - '}'

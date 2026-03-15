@@ -7,9 +7,9 @@ tasks:
 
   update:
     cmds:
-      - go run ./cmd/indexer/ -name gena_grpc_server -src ../gena_grpc_server/
-      - go run ./cmd/indexer/ -name gena_rest_server -src ../gena_rest_server/
-      - go run ./cmd/indexer/ -name gena_kafka_producer -src ../gena_kafka_producer/
+      - go run ./cmd/indexer/ add -name gena_grpc_server -src ../gena_grpc_server/
+      - go run ./cmd/indexer/ add -name gena_rest_server -src ../gena_rest_server/
+      - go run ./cmd/indexer/ add -name gena_kafka_producer -src ../gena_kafka_producer/
 
   run:
     cmds:

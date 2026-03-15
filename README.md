@@ -8,19 +8,52 @@ Install
 go install github.com/zlietapki/gena/cmd/gena@latest
 ```
 
-Update project templates
-------------------------
+Indexer
+-------
+
+Управление шаблонами проектов
 
 ```shell
-go run ./cmd/indexer/ -name microboiler_grpc_server -src ../microboiler_grpc_server/
-go run ./cmd/indexer/ -name microboiler_rest_server -src ../microboiler_rest_server/
+go run ./cmd/indexer/ [command] [-params args]
 ```
 
-start
------
+Commands:
+
+* help - помощь
+* list - показать список шаблонов
+* add - добавить шаблон
+  * -name index_name -src template_project_path
+* rm index_name - удалить шаблон
+* check - проверить конфлиликты загруженных шаблонов
+* version - версия indexer
 
 ```shell
-go run ./cmd/gena/
+go run ./cmd/indexer/ list
+go run ./cmd/indexer/ add -name gena_grpc_server -src ../gena_grpc_server/
+go run ./cmd/indexer/ add -name gena_rest_server -src ../gena_rest_server/
+go run ./cmd/indexer/ rm index_name
+go run ./cmd/indexer/ check
+go run ./cmd/indexer/ version
+```
+
+Gena
+-----
+
+Генерация проектов
+
+Commands:
+
+* help - помощь
+* version - версия gena
+* list - показать список шаблонов
+* new - генерация проекта
+  * -use index_name - использовать шаблон
+  * -out - папка назначения 
+
+```shell
+go run ./cmd/gena/ new [-use index_name] [-out output_path]
+go run ./cmd/gena/ list
+go run ./cmd/gena/ version
 ```
 
 Debug
