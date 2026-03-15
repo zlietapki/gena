@@ -66,4 +66,10 @@ task check
 
 cd /tmp/some/check
 task run
+
+# push all
+cd ~/workspace/gena/ && git add . && git commit -m'changes' && git push
+cd ~/workspace/gena_kafka_producer/ && git add . && git commit -m'changes' && git push
+cd ~/workspace/gena_grpc_server/ && git add . && git commit -m'changes' && git push
+cd ~/workspace/gena_rest_server/ && git add . && git commit -m'changes' && git push
 ```
