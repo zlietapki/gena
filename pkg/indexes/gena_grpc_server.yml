@@ -199,6 +199,11 @@ files:
             - '      - tools'
             - '    cmds:'
             - '      - PATH=$BIN_PATH go generate ./...'
+        - name: generate_cmds
+          type: merge
+        - name: post_generate_cmds
+          type: single
+          data:
             - ""
             - '  test:'
             - '    desc: Run tests'

@@ -19,13 +19,16 @@ func SingleBlocksSameContent() error {
 			continue
 		}
 
-		checkSingleBlocksSameContent(path, fileEntries)
+		err = checkSingleBlocksSameContent(path, fileEntries)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) bool {
+func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) error {
 	blockMap := map[string][]blockEntry{}
 
 	for _, fileEnt := range fileEntries {
@@ -39,7 +42,6 @@ func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) bool {
 		}
 	}
 
-	ok := true
 	for blockName, blockEntries := range blockMap {
 		if len(blockEntries) < 2 {
 			continue
@@ -48,12 +50,6 @@ func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) bool {
 		firstBlockData := blockEntries[0].block.Data
 		for _, be := range blockEntries[1:] {
 			if !reflect.DeepEqual(firstBlockData, be.block.Data) {
-				fmt.Printf(`Different content in blocks type:single
-	file=%q block=%q
-	%s
-	%s
-`,
-					path, blockName, blockEntries[0].projName, be.projName)
 				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 					A:        withNewlines(firstBlockData),
 					B:        withNewlines(be.block.Data),
@@ -61,11 +57,16 @@ func checkSingleBlocksSameContent(path string, fileEntries []fileEntry) bool {
 					ToFile:   be.projName,
 					Context:  3,
 				})
-				fmt.Print(diffStr)
-				ok = false
+
+				return fmt.Errorf(`Different content in blocks type:single
+	file=%q block=%q
+	%s
+	%s
+%s`,
+					path, blockName, blockEntries[0].projName, be.projName, diffStr)
 			}
 		}
 	}
 
-	return ok
+	return nil
 }

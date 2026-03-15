@@ -188,6 +188,13 @@ files:
             - '      - tools'
             - '    cmds:'
             - '      - PATH=$BIN_PATH go generate ./...'
+        - name: generate_cmds
+          type: merge
+          data:
+            - '      - PATH=$BIN_PATH oapi-codegen --config=api/oapi-codegen.yml api/swagger.yml'
+        - name: post_generate_cmds
+          type: single
+          data:
             - ""
             - '  test:'
             - '    desc: Run tests'
@@ -240,15 +247,6 @@ dirs:
     - name: api
       mode: 755
       files:
-        - name: generate.go
-          mode: 644
-          blocks:
-            - name: noblocks
-              type: single
-              data:
-                - package api
-                - ""
-                - //go:generate oapi-codegen --config=oapi-codegen.yml swagger.yml
         - name: oapi-codegen.yml
           mode: 644
           blocks:
@@ -258,7 +256,7 @@ dirs:
                 - 'package: rest_models'
                 - 'generate:'
                 - '  models: true'
-                - 'output: ../internal/rest_models/models.gen.go'
+                - 'output: internal/rest_models/models.gen.go'
         - name: swagger.yml
           mode: 644
           blocks:

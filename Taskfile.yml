@@ -25,7 +25,7 @@ tasks:
       - update
     cmds:
       - rm -rf /tmp/some/check
-      - go run ./cmd/gena/ -name check -opt gena_grpc_server -opt gena_rest_server -opt gena_kafka_producer -output /tmp/some/
+      - go run ./cmd/gena/ new -use gena_grpc_server -use gena_rest_server -use gena_kafka_producer -out /tmp/some/
 
   lint:
     desc: Run linter

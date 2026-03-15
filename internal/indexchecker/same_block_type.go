@@ -15,13 +15,16 @@ func BlocksSameType() error {
 			continue
 		}
 
-		checkBlockSameTypes(path, fileEntries)
+		err = checkBlockSameTypes(path, fileEntries)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func checkBlockSameTypes(path string, fileEntries []fileEntry) bool {
+func checkBlockSameTypes(path string, fileEntries []fileEntry) error {
 	blockMap := map[string][]blockEntry{}
 
 	for _, fileEnt := range fileEntries {
@@ -33,7 +36,6 @@ func checkBlockSameTypes(path string, fileEntries []fileEntry) bool {
 		}
 	}
 
-	ok := true
 	for blockName, blockEntries := range blockMap {
 		if len(blockEntries) < 2 {
 			continue
@@ -42,16 +44,15 @@ func checkBlockSameTypes(path string, fileEntries []fileEntry) bool {
 		ref := blockEntries[0].block.Type
 		for _, be := range blockEntries[1:] {
 			if ref != be.block.Type {
-				fmt.Printf(`Block type mismatch:
+				return fmt.Errorf(`Block type mismatch:
 	file=%q block=%q
 	%s
 	%s
 `,
 					path, blockName, blockEntries[0].projName, be.projName)
-				ok = false
 			}
 		}
 	}
 
-	return ok
+	return nil
 }

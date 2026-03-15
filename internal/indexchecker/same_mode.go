@@ -15,7 +15,10 @@ func SameMode() error {
 			continue
 		}
 
-		checkSameFileMode(path, entries)
+		err = checkSameFileMode(path, entries)
+		if err != nil {
+			return err
+		}
 	}
 
 	for path, entries := range fc.dirMap {
@@ -23,38 +26,37 @@ func SameMode() error {
 			continue
 		}
 
-		checkSameDirMode(path, entries)
+		err = checkSameDirMode(path, entries)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func checkSameFileMode(path string, entries []fileEntry) bool {
+func checkSameFileMode(path string, entries []fileEntry) error {
 	ref := entries[0].file.Mode
 
-	ok := true
 	for _, e := range entries[1:] {
 		if ref != e.file.Mode {
-			fmt.Printf("File mode mismatch:\n\tpath=%q\n\t%s mode=%s\n\t%s mode=%s\n",
+			return fmt.Errorf("File mode mismatch:\n\tpath=%q\n\t%s mode=%s\n\t%s mode=%s\n",
 				path, entries[0].projName, ref, e.projName, e.file.Mode)
-			ok = false
 		}
 	}
 
-	return ok
+	return nil
 }
 
-func checkSameDirMode(path string, entries []dirEntry) bool {
+func checkSameDirMode(path string, entries []dirEntry) error {
 	ref := entries[0].dir.Mode
 
-	ok := true
 	for _, e := range entries[1:] {
 		if ref != e.dir.Mode {
-			fmt.Printf("Dir mode mismatch:\n\tpath=%q\n\t%s mode=%s\n\t%s mode=%s\n",
+			return fmt.Errorf("Dir mode mismatch:\n\tpath=%q\n\t%s mode=%s\n\t%s mode=%s\n",
 				path, entries[0].projName, ref, e.projName, e.dir.Mode)
-			ok = false
 		}
 	}
 
-	return ok
+	return nil
 }

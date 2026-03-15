@@ -87,6 +87,8 @@ func showVersion() {
 }
 
 func runCmd(currentDir string, command string) {
+	fmt.Printf("Running: %s\n", command)
+
 	args := strings.Split(command, " ")
 
 	cmd := exec.Command(args[0], args[1:]...)
@@ -94,6 +96,8 @@ func runCmd(currentDir string, command string) {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		printError("Error running %s: %s %v", command, out, err)
 	}
+
+	fmt.Printf("OK\n")
 }
 
 func printError(msg string, args ...interface{}) {
