@@ -1,5 +1,7 @@
-Microboiler
-===========
+Gena
+====
+
+Project generator
 
 Install
 -------
