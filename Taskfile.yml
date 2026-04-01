@@ -21,11 +21,9 @@ tasks:
       - go build -o bin/gena ./cmd/gena
 
   check:
-    deps:
-      - update
+    desc: Run full project validation (11 stages)
     cmds:
-      - rm -rf /tmp/some/check
-      - go run ./cmd/gena/ new -use gena_grpc_server -use gena_rest_server -use gena_kafka_producer -out /tmp/some/
+      - bash scripts/check.sh
 
   lint:
     desc: Run linter

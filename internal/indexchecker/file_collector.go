@@ -47,7 +47,7 @@ func (c *fileCollector) collect(projName string, dir vfs.Directory, prefix strin
 			projName: projName,
 			dir:      sub,
 		})
-		
+
 		c.collect(projName, sub, subPath)
 	}
 }
