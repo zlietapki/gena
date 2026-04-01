@@ -34,6 +34,7 @@ files:
             - .task/
             - bin/
             - .env
+            - '*.gen.go'
     - name: Dockerfile
       mode: 644
       blocks:
@@ -462,6 +463,13 @@ dirs:
                   data:
                     - package domain
                     - ""
+                - name: imports
+                  type: merge
+                  data:
+                    - import (
+                    - "\t\"context\""
+                    - )
+                    - ""
                 - name: usecase
                   type: single
                   data:
@@ -471,7 +479,7 @@ dirs:
                 - name: methods
                   type: merge
                   data:
-                    - "\tGetCounter() (Counter, error)"
+                    - "\tGetCounter(ctx context.Context) (Counter, error)"
                 - name: post_methods
                   type: single
                   data:
@@ -575,7 +583,7 @@ dirs:
                     - )
                     - ""
                     - func (h *UserHandler) GetCounter(c *echo.Context) error {
-                    - "\tcounter, err := h.uc.GetCounter()"
+                    - "\tcounter, err := h.uc.GetCounter(c.Request().Context())"
                     - "\tif err != nil {"
                     - "\t\treturn c.JSON(http.StatusInternalServerError, map[string]string{\"error\": err.Error()})"
                     - "\t}"
@@ -614,9 +622,13 @@ dirs:
                   data:
                     - package usecase
                     - ""
-                    - import "github.com/zlietapki/gena/internal/domain"
+                    - import (
+                    - "\t\"context\""
                     - ""
-                    - func (uc *Usecase) GetCounter() (domain.Counter, error) {
+                    - "\t\"github.com/zlietapki/gena/internal/domain\""
+                    - )
+                    - ""
+                    - func (uc *Usecase) GetCounter(_ context.Context) (domain.Counter, error) {
                     - "\treturn uc.counterRepo.GetNextCounter()"
                     - '}'
             - name: uc.go

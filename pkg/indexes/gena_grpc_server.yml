@@ -439,6 +439,9 @@ dirs:
                   type: single
                   data:
                     - '}'
+          dirs:
+            - name: mocks
+              mode: 755
         - name: grpc_handler
           mode: 755
           files:

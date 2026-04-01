@@ -536,6 +536,9 @@ dirs:
                   type: single
                   data:
                     - '}'
+          dirs:
+            - name: mocks
+              mode: 755
         - name: kafka
           mode: 755
           files:
