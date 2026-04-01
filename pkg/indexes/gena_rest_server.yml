@@ -316,7 +316,7 @@ dirs:
                     - "\t\"github.com/zlietapki/gena/internal/map_repo\""
                     - "\t\"github.com/zlietapki/gena/internal/rest_handler\""
                     - "\t\"github.com/zlietapki/gena/internal/usecase\""
-                    - "\t\"github.com/zlietapki/gena/pkg/httpserver\""
+                    - "\t\"github.com/zlietapki/gena/pkg/http_echo_server\""
                     - )
                     - ""
                 - name: main
@@ -348,9 +348,9 @@ dirs:
                   data:
                     - "\trestHandler := rest_handler.New(uc)"
                     - ""
-                    - "\thttpServer := httpserver.New(cfg.HTTPListen)"
+                    - "\thttpServer := http_echo_server.New(cfg.HTTPListen)"
                     - ""
-                    - "\tapi := httpServer.Srv.Group(\"/api\")"
+                    - "\tapi := httpServer.Echo.Group(\"/api\")"
                     - "\tapi.GET(\"/counter\", restHandler.GetCounter)"
                     - ""
                     - "\thttpErrCh := httpServer.Start()"
@@ -665,16 +665,16 @@ dirs:
     - name: pkg
       mode: 755
       dirs:
-        - name: httpserver
+        - name: http_echo_server
           mode: 755
           files:
-            - name: http_server.go
+            - name: http_echo_server.go
               mode: 644
               blocks:
                 - name: noblocks
                   type: single
                   data:
-                    - package httpserver
+                    - package http_echo_server
                     - ""
                     - import (
                     - "\t\"net/http\""
@@ -684,7 +684,7 @@ dirs:
                     - )
                     - ""
                     - type Server struct {
-                    - "\tSrv    *echo.Echo"
+                    - "\tEcho   *echo.Echo"
                     - "\tlisten string"
                     - '}'
                     - ""
@@ -694,7 +694,7 @@ dirs:
                     - "\te.Use(middleware.Recover())       // recover panics as errors for proper error handling"
                     - ""
                     - "\treturn Server{"
-                    - "\t\tSrv:    e,"
+                    - "\t\tEcho:   e,"
                     - "\t\tlisten: listen,"
                     - "\t}"
                     - '}'
@@ -702,7 +702,7 @@ dirs:
                     - func (s *Server) Start() chan error {
                     - "\terrCh := make(chan error)"
                     - "\tgo func() {"
-                    - "\t\terrCh <- s.Srv.Start(s.listen)"
+                    - "\t\terrCh <- s.Echo.Start(s.listen)"
                     - "\t\tclose(errCh)"
                     - "\t}()"
                     - "\treturn errCh"
