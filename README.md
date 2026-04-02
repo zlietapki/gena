@@ -1,6 +1,8 @@
 Gena
 ====
 
+![gena-banner.svg](assets/gena-banner.svg)
+
 Gena is a project boilerplate generator that merges multiple template projects into
 a single new project. Instead of maintaining one monolithic template, you compose
 smaller, focused templates — gRPC server, REST server, Kafka producer — and combine
